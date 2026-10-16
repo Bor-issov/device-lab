@@ -20,3 +20,9 @@
 
 ## 2026-10-16 - Stale file: dependency copy
 - `rm -rf node_modules/@device-lab && npm i <path>`; or bump the bridge version.
+
+## 2026-10-16 - Local tool security
+- Bind dev/prod servers to 127.0.0.1 instead of trusting Host headers.
+- postMessage: pin targetOrigin, check event.origin + event.source, validate payload schema, normalise paths with
+  `new URL(path, location.origin)` and compare origins.
+- Gate embed bridges to development builds.

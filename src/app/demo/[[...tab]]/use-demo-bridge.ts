@@ -7,6 +7,7 @@ import { BRIDGE_SOURCE, LAB_SOURCE, WINDOW_NAME_PREFIX, type LogLevel, type Prev
 // Minimal web-only twin of packages/preview-bridge so the demo app speaks the same protocol.
 
 const FALLBACK: PreviewConfig = {
+  labOrigin: "",
   deviceId: "browser",
   deviceName: "Browser",
   deviceKind: "phone",
@@ -54,7 +55,8 @@ export function useDemoBridge() {
   const embedded = useRef(false)
 
   const post = (msg: Record<string, unknown>) => {
-    if (embedded.current) window.parent.postMessage({ source: BRIDGE_SOURCE, deviceId: deviceId.current, ...msg }, "*")
+    // The demo is served by the Lab itself, so the only valid parent is this same origin.
+    if (embedded.current) window.parent.postMessage({ source: BRIDGE_SOURCE, deviceId: deviceId.current, ...msg }, window.location.origin)
   }
 
   useEffect(() => {
@@ -62,9 +64,9 @@ export function useDemoBridge() {
     deviceId.current = readWindowConfig()?.deviceId ?? new URLSearchParams(window.location.search).get("dl_device") ?? "browser"
 
     function onMessage(e: MessageEvent) {
-      if (e.source !== window.parent || e.data?.source !== LAB_SOURCE) return
+      if (e.source !== window.parent || e.origin !== window.location.origin || e.data?.source !== LAB_SOURCE) return
       if (e.data.type === "config") store.set(e.data.config)
-      if (e.data.type === "navigate" && typeof e.data.path === "string" && e.data.path.startsWith("/demo")) router.push(e.data.path)
+      if (e.data.type === "navigate" && typeof e.data.path === "string" && /^\/demo(\/[\w-]*)?$/.test(e.data.path)) router.push(e.data.path)
     }
     window.addEventListener("message", onMessage)
     post({ type: "hello", version: "demo" })

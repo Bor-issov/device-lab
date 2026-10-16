@@ -2,7 +2,7 @@
 
 import type { LabMessage } from "@/lib/protocol"
 
-// Live iframe registry. Messages from frames are attributed by window identity, never by claimed id.
+// Live iframe registry. Messages from frames are attributed by window identity and origin, never by claimed id.
 const frames = new Map<string, HTMLIFrameElement>()
 
 export function registerFrame(id: string, el: HTMLIFrameElement | null) {
@@ -10,13 +10,26 @@ export function registerFrame(id: string, el: HTMLIFrameElement | null) {
   else frames.delete(id)
 }
 
-export function postToFrame(id: string, message: LabMessage) {
-  frames.get(id)?.contentWindow?.postMessage(message, "*")
+function originOf(el: HTMLIFrameElement) {
+  try {
+    return new URL(el.src).origin
+  } catch {
+    return null
+  }
 }
 
-export function deviceIdForSource(source: MessageEventSource | null) {
-  if (!source) return null
-  for (const [id, el] of frames) if (el.contentWindow === source) return id
+// Target the frame's own origin so config never goes to a page the frame navigated away to.
+export function postToFrame(id: string, message: LabMessage) {
+  const el = frames.get(id)
+  const origin = el && originOf(el)
+  if (origin && origin !== "null") el.contentWindow?.postMessage(message, origin)
+}
+
+export function deviceIdForMessage(event: MessageEvent) {
+  if (!event.source) return null
+  for (const [id, el] of frames) {
+    if (el.contentWindow === event.source && originOf(el) === event.origin) return id
+  }
   return null
 }
 
