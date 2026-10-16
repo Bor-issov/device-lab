@@ -1,0 +1,12 @@
+# One flow, every device in the workflow matrix. Edit the steps to walk through your screens.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- takeScreenshot: 01-launch
+
+# Example: open a tab by its visible label, then capture it.
+# - tapOn: "Settings"
+# - waitForAnimationToEnd
+# - takeScreenshot: 02-settings

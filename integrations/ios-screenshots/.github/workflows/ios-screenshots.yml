@@ -1,0 +1,120 @@
+# Real iOS Simulator screenshots without owning a Mac.
+# Copy .github/ and .maestro/ from this folder into your Expo app repo.
+# macOS runners are free on public repos. Private repos bill macOS minutes at 10x.
+
+name: iOS screenshots
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ios-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate native iOS project
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build for the simulator (Release, JS bundled in)
+        run: |
+          set -o pipefail
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO | tail -n 80
+
+      - name: Package app
+        run: |
+          APP=$(find build/Build/Products/Release-iphonesimulator -maxdepth 1 -name "*.app" | head -n 1)
+          ditto -c -k --keepParent "$APP" app.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulator-app
+          path: app.zip
+          retention-days: 1
+
+  screenshots:
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        device:
+          - iPhone 16 Pro Max
+          - iPhone 16 Pro
+          - iPhone 16
+          - iPad Pro 11-inch (M4)
+          - iPad mini (A17 Pro)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: simulator-app
+
+      - name: Boot simulator
+        env:
+          DEVICE: ${{ matrix.device }}
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r --arg n "$DEVICE" '[.devices[][] | select(.name == $n)] | last | .udid')
+          if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+            echo "Simulator '$DEVICE' not available on this runner"; xcrun simctl list devices available; exit 1
+          fi
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3
+
+      - name: Install app
+        run: |
+          unzip -q app.zip
+          APP=$(ls -d *.app | head -n 1)
+          xcrun simctl install "$UDID" "$APP"
+          echo "APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")" >> "$GITHUB_ENV"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run flows
+        run: |
+          mkdir -p shots
+          maestro --device "$UDID" test .maestro --env APP_ID="$APP_ID" --test-output-dir maestro-output
+          find . -maxdepth 1 -name "*.png" -exec mv {} shots/ \;
+
+      - name: Artifact name
+        if: always()
+        env:
+          DEVICE: ${{ matrix.device }}
+        run: echo "SLUG=$(echo "$DEVICE" | tr -cs 'A-Za-z0-9' '-' | sed 's/-$//')" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-${{ env.SLUG }}
+          path: |
+            shots
+            maestro-output
