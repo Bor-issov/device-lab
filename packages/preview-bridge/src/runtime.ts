@@ -1,5 +1,5 @@
 import { Appearance, PixelRatio } from "react-native"
-import { getPreviewConfig, isInLab, setPreviewConfig, subscribe } from "./config"
+import { getPreviewConfig, isInLab, labOrigin, setPreviewConfig, subscribe } from "./config"
 import { BRIDGE_SOURCE, LAB_SOURCE, type LogLevel } from "./protocol"
 
 const VERSION = "0.1.0"
@@ -15,13 +15,15 @@ export function setNavigateHandler(handler: ((path: string) => void) | null) {
 }
 
 export function installRuntime() {
-  if (installed || !isInLab) return
+  if (installed || !isInLab || !labOrigin) return
   installed = true
+  const target = labOrigin
 
-  const deviceId = () => getPreviewConfig()?.deviceId ?? new URLSearchParams(window.location.search).get("dl_device") ?? "unknown"
+  const deviceId = () => getPreviewConfig()?.deviceId ?? "unknown"
+  // Routes and console output only ever go to the pinned loopback Lab origin.
   const post: Post = (msg) => {
     try {
-      window.parent.postMessage({ source: BRIDGE_SOURCE, deviceId: deviceId(), ...msg }, "*")
+      window.parent.postMessage({ source: BRIDGE_SOURCE, deviceId: deviceId(), ...msg }, target)
     } catch {}
   }
 
@@ -31,11 +33,11 @@ export function installRuntime() {
   reportRoutes(post)
 
   window.addEventListener("message", (event) => {
-    if (event.source !== window.parent) return
+    if (event.source !== window.parent || event.origin !== target) return
     const data = event.data
     if (!data || data.source !== LAB_SOURCE) return
-    if (data.type === "config" && data.config) setPreviewConfig(data.config)
-    if (data.type === "navigate" && typeof data.path === "string" && data.path.startsWith("/")) navigate(data.path)
+    if (data.type === "config") setPreviewConfig(data.config)
+    if (data.type === "navigate") navigate(data.path)
   })
 
   subscribe(applyDocument)
@@ -154,7 +156,17 @@ function reportRoutes(post: Post) {
 
 // Prefer the app's router (PreviewBridge onNavigate). Fallback: push the URL and let the
 // router's popstate listener pick it up, which React Navigation / Expo Router do on web.
-function navigate(path: string) {
+function navigate(raw: unknown) {
+  // Same-origin paths only: no "//host", no backslashes, nothing that resolves off-origin.
+  if (typeof raw !== "string" || raw.length > 2048 || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return
+  let url: URL
+  try {
+    url = new URL(raw, window.location.origin)
+  } catch {
+    return
+  }
+  if (url.origin !== window.location.origin) return
+  const path = url.pathname + url.search + url.hash
   if (path === currentPath()) return
   if (navigateHandler) return navigateHandler(path)
   history.pushState(history.state, "", path)

@@ -11,6 +11,8 @@ export type ColorScheme = "dark" | "light"
 export type TextDirection = "ltr" | "rtl"
 
 export type PreviewConfig = {
+  /** Origin of the Lab page. The bridge only talks to this origin, and only if it is loopback. */
+  labOrigin: string
   deviceId: string
   deviceName: string
   deviceKind: DeviceKind

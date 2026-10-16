@@ -182,6 +182,7 @@ export function buildConfig(id: string, s: Pick<LabState, "poses" | "scheme" | "
   if (!spec) return null
   const pose = s.poses[id] ?? DEFAULT_POSE
   return {
+    labOrigin: typeof window === "undefined" ? "" : window.location.origin,
     deviceId: spec.id,
     deviceName: spec.name,
     deviceKind: spec.kind,

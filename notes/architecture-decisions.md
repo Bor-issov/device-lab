@@ -43,3 +43,14 @@ examples/expo-app: Expo SDK 58, NativeWind 4.2.7 (Tailwind v3, darkMode "class")
 web output "single". Gluestack v5 alpha + NativeWind v5 RC (what `gluestack-ui@latest init` installs) crashes
 on react-native-web 0.21 with a circular FlatList import in react-native-css, independent of the Lab.
 Bridge installed with `install-links=true` (.npmrc) so the file: dependency is copied, not symlinked.
+
+## 2026-10-16 - Security boundary for the Lab and the bridge
+- Lab server binds 127.0.0.1 (`pnpm dev` / `pnpm start` use `-H 127.0.0.1`). This is the real protection for the
+  adb routes; the Host check stays as DNS-rebinding defence, plus Origin/JSON checks and an x-forwarded-for check.
+- Bridge activates only in development builds (`__DEV__` / NODE_ENV) and only when the config's `labOrigin` is a
+  loopback origin. postMessage targets that origin; inbound messages must come from window.parent AND that origin.
+- Every config is schema-validated (enums, numeric ranges, id pattern). Navigate paths must be same-origin
+  (`/` but not `//`, no backslashes, resolved origin unchanged).
+- Lab posts to each frame's own src origin and attributes inbound messages by window identity + origin.
+- Trade-off: a Lab on another machine or a non-loopback hostname will not connect to the bridge. Revisit with an
+  explicit allowlist if that is ever needed.

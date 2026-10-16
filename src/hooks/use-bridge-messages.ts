@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { buildConfig, useLab } from "@/lib/store"
-import { deviceIdForSource, frameIds, postToFrame } from "@/lib/frames"
+import { deviceIdForMessage, frameIds, postToFrame } from "@/lib/frames"
 import { LAB_SOURCE, isBridgeMessage } from "@/lib/protocol"
 
 // Single window listener for every frame: handshake, route reports, console forwarding, nav sync.
@@ -12,7 +12,7 @@ export function useBridgeMessages() {
 
     function onMessage(event: MessageEvent) {
       if (!isBridgeMessage(event.data)) return
-      const id = deviceIdForSource(event.source)
+      const id = deviceIdForMessage(event)
       if (!id) return
       const lab = useLab.getState()
       const msg = event.data

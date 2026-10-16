@@ -37,3 +37,9 @@
 
 ## 2026-10-16 - Error stack without message in Logs (Firefox)
 - Status: fixed (prefix `Name: message` when stack lacks it)
+
+## 2026-10-16 - Security review findings (automated)
+- [HIGH] adb routes trusted the Host header; next dev/start listened on all interfaces, so a LAN client could spoof Host/Origin
+- [MEDIUM] bridge posted routes/console output with targetOrigin "*"
+- [MEDIUM] bridge accepted config/navigate from any parent origin; "//host" paths passed the startsWith("/") check
+- Status: fixed on fix/security-hardening

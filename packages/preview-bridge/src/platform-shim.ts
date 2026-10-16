@@ -2,12 +2,12 @@
 // Libraries in node_modules keep the real react-native-web Platform, so their web code paths stay intact.
 
 import { Platform as WebPlatform } from "react-native"
-import { getPreviewConfig } from "./config"
+import { getPreviewConfig, isInLab } from "./config"
 
 export * from "react-native"
 
 const config = getPreviewConfig()
-const os = config?.spoofPlatform ? config.os : null
+const os = isInLab && config?.spoofPlatform ? config.os : null
 
 type Spec<T> = { ios?: T; android?: T; native?: T; web?: T; default?: T }
 

@@ -1,5 +1,10 @@
 # Features
 
+## [v1.2] Security hardening (2026-10-16)
+- Lab binds to 127.0.0.1; adb routes also reject non-loopback x-forwarded-for
+- Bridge: dev builds only, loopback Lab origin only, pinned postMessage origin both ways, config validation,
+  same-origin navigation only; Lab posts to frame origins and checks inbound origin
+
 ## [v1.1] Bridge verified on a real Expo app (2026-10-16)
 - examples/expo-app: Expo SDK 58 + NativeWind 4.2.7 + Reanimated 4 + Expo Router "Bridge check" app
 - Verified in the Lab: Platform.OS/select per device (ios/android), per-device insets and viewport,
