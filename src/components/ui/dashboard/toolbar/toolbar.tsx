@@ -1,10 +1,9 @@
-"use client"
-
 import { useState } from "react"
-import { Camera, Maximize, Plug, RefreshCw, RotateCw, ScrollText, Smartphone } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { Camera, Images, Maximize, Plug, RefreshCw, RotateCw, ScrollText, Smartphone } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { IconButton, Segmented, Toggle } from "@/components/ui/dashboard/primitives/controls"
-import { captureDevices } from "@/lib/capture"
+import { canCaptureNatively, captureDevices, captureNative } from "@/lib/capture"
 import { fitZoom } from "@/lib/fit"
 import { useLab, type PanelId } from "@/lib/store"
 
@@ -17,8 +16,9 @@ const FONT_SCALES = [
 
 export function Toolbar() {
   const s = useLab()
-  const errors = s.logs.filter((l) => l.level === "error").length
+  const errors = s.logs.filter((l) => l.level === "error" && !l.past).length
   const [capturing, setCapturing] = useState(false)
+  const qc = useQueryClient()
 
   function fit() {
     const canvas = document.getElementById("lab-canvas")
@@ -29,7 +29,15 @@ export function Toolbar() {
   async function capture() {
     setCapturing(true)
     try {
-      await captureDevices()
+      if (canCaptureNatively) {
+        const shots = await captureNative()
+        if (shots.length) {
+          await qc.invalidateQueries({ queryKey: ["screenshots"] })
+          s.set("panel", "shots")
+        }
+      } else {
+        await captureDevices()
+      }
     } catch (err) {
       if (!(err instanceof DOMException && err.name === "NotAllowedError")) console.error(err)
     } finally {
@@ -116,6 +124,7 @@ export function Toolbar() {
             {errors > 0 && <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-primary" />}
           </span>
         )}
+        {canCaptureNatively && panelButton("shots", "Screenshots", <Images />)}
         {panelButton("setup", "Bridge setup", <Plug />)}
       </div>
     </header>

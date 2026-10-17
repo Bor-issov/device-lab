@@ -1,12 +1,11 @@
-"use client"
-
 import { useState } from "react"
 import { ArrowLeft, Circle, FoldHorizontal, Power, RotateCw, Square, UnfoldHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CodeBlock } from "@/components/ui/dashboard/primitives/code-block"
 import { Dot, IconButton } from "@/components/ui/dashboard/primitives/controls"
 import { useAndroidInput, useAndroidStatus, useBootAvd } from "@/hooks/use-android"
-import type { SdkStatus } from "@/lib/android/sdk"
+import type { SdkStatus } from "@/lib/android/types"
+import { isNative } from "@/lib/native"
 import { useLab } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { LiveScreen } from "./live-screen"
@@ -45,6 +44,7 @@ export function AndroidPanel() {
   const serial = active?.serial ?? null
   const input = useAndroidInput(serial)
 
+  if (!isNative) return <p className="px-5 text-sm leading-relaxed text-muted-foreground">Android control runs through adb on this machine, so it needs the desktop app. Start it with pnpm app.</p>
   if (isPending) return <p className="px-5 text-sm text-muted-foreground">Looking for the Android SDK</p>
   if (error) return <p className="px-5 text-sm text-muted-foreground">{error.message}</p>
   if (!data?.adb || !data.emulator) return <AndroidSetup status={data} />
@@ -209,8 +209,8 @@ export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
       <Section title="3. Create devices">
         <CodeBlock code={AVD_COMMANDS} />
       </Section>
-      <Section title="4. Restart the Lab">
-        <p className="text-sm text-muted-foreground">Restart the Next.js server so it picks up ANDROID_HOME. This panel refreshes on its own.</p>
+      <Section title="4. Restart Device Lab">
+        <p className="text-sm text-muted-foreground">Restart Device Lab so it picks up ANDROID_HOME. This panel refreshes on its own.</p>
       </Section>
     </div>
   )

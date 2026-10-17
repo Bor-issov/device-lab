@@ -1,5 +1,3 @@
-"use client"
-
 import { useRef } from "react"
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
@@ -7,6 +5,8 @@ import { X } from "lucide-react"
 import { AndroidPanel } from "@/components/ui/dashboard/android-panel/android-panel"
 import { LogsPanel } from "@/components/ui/dashboard/logs-panel/logs-panel"
 import { SetupPanel } from "@/components/ui/dashboard/setup-panel/setup-panel"
+import { ShotsPanel } from "@/components/ui/dashboard/shots-panel/shots-panel"
+import { isNative } from "@/lib/native"
 import { IconButton, Segmented } from "@/components/ui/dashboard/primitives/controls"
 import { useLab, type PanelId } from "@/lib/store"
 
@@ -36,6 +36,7 @@ export function SidePanel() {
           options={[
             { value: "android", label: "Android" },
             { value: "logs", label: "Logs" },
+            ...(isNative ? [{ value: "shots" as const, label: "Shots" }] : []),
             { value: "setup", label: "Setup" },
           ]}
         />
@@ -46,6 +47,7 @@ export function SidePanel() {
       <div className="scrollbar-quiet min-h-0 flex-1 overflow-y-auto">
         {panel === "android" && <AndroidPanel />}
         {panel === "logs" && <LogsPanel />}
+        {panel === "shots" && <ShotsPanel />}
         {panel === "setup" && <SetupPanel />}
       </div>
     </aside>

@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { DeviceFrame } from "@/components/ui/dashboard/device-frame/device-frame"
 import { useDevServer } from "@/hooks/use-dev-server"

@@ -6,9 +6,15 @@
 - [ ] Install the Android SDK + create Pixel_Fold AVD, verify live view, fold/unfold, Expo Go open
 - [ ] Push integrations/ios-screenshots into the app repo and run the workflow once (untested so far)
 
+- [ ] Native capture on Windows/macOS (WebView2 CapturePreview / WKWebView takeSnapshot)
+- [ ] Optional full-resolution capture (render at zoom 1 off screen) instead of on-screen scale
+- [ ] Persist custom presets in browser dev mode too (only SQLite today)
+- [ ] App icon/logo pass (public/logo/logo.svg is a placeholder mark)
+
 ## Later
 - [ ] Faster Android stream (scrcpy H.264 over WebSocket instead of screencap polling)
 - [ ] Scroll sync across frames
-- [ ] Custom device presets (add/edit sizes in the UI)
+- [x] Custom device presets (add sizes in the UI, SQLite)
+- [ ] Edit existing custom presets (cutout, radius, insets)
 - [ ] Side-by-side diff of GitHub Actions iOS screenshots vs Lab frames
 - [ ] Device groups / saved layouts (Supabase if sharing is needed)

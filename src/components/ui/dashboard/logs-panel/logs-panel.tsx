@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { getDevice } from "@/lib/devices"
@@ -7,6 +5,7 @@ import { useLab } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 const time = (at: number) => new Date(at).toLocaleTimeString([], { hour12: false })
+const day = (at: number) => new Date(at).toLocaleDateString([], { month: "short", day: "numeric" })
 
 // First line is the message; anything after it (stack frames) stays collapsed.
 function LogMessage({ message }: { message: string }) {
@@ -57,9 +56,9 @@ export function LogsPanel() {
       ) : (
         <ol className="flex flex-col gap-1">
           {visible.map((l) => (
-            <li key={l.id} className={cn("rounded-lg px-3 py-2", l.level === "error" ? "bg-muted" : "bg-transparent")}>
+            <li key={l.id} className={cn("rounded-lg px-3 py-2", l.level === "error" ? "bg-muted" : "bg-transparent", l.past && "opacity-55")}>
               <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-                <span className="tabular-nums">{time(l.at)}</span>
+                <span className="tabular-nums">{l.past ? `${day(l.at)} ${time(l.at)}` : time(l.at)}</span>
                 <span className="truncate">{getDevice(l.deviceId)?.name ?? l.deviceId}</span>
                 <span className={cn("ml-auto", l.level === "error" && "text-primary")}>{l.level}</span>
               </div>

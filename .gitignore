@@ -13,9 +13,10 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# vite / tauri
+/dist/
+/src-tauri/target/
+/src-tauri/gen/schemas/
 
 # production
 /build
@@ -38,7 +39,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # bridge tarball
 *.tgz

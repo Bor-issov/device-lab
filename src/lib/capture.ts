@@ -1,9 +1,58 @@
-"use client"
+import { isNative, native, type Screenshot } from "@/lib/native"
 
-// Cross-origin iframes cannot be drawn to a canvas, so capture the screen through the
-// Screen Capture API and crop each device shell out of a single video frame.
+// Cross-origin iframes cannot be drawn to a canvas. The desktop app has the webview snapshot itself
+// and Rust crops and saves each shell. A plain browser falls back to the Screen Capture API and
+// crops each device shell out of a single video frame.
 
 type Region = { id: string; rect: DOMRect; radius: number }
+
+function visibleRegions(): Region[] {
+  return [...document.querySelectorAll<HTMLElement>("[data-device-shell]")]
+    .map((el) => ({ id: el.dataset.deviceShell ?? "device", rect: el.getBoundingClientRect(), radius: Number(el.dataset.radius ?? 0) }))
+    .filter(({ rect }) => rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth)
+}
+
+const paint = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 120))))
+
+function fitsViewport(rect: DOMRect) {
+  return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth
+}
+
+/**
+ * Desktop only: saves one PNG per selected device to the app data folder and records it in SQLite.
+ * WebKit snapshots the visible viewport, so every shell that fits on screen goes in one pass and
+ * the rest are scrolled into view one at a time. The canvas scroll position is restored afterwards.
+ */
+export async function captureNative(): Promise<Screenshot[]> {
+  const canvas = document.getElementById("lab-canvas")
+  const scroll = canvas ? { top: canvas.scrollTop, left: canvas.scrollLeft } : null
+  const pending = [...document.querySelectorAll<HTMLElement>("[data-device-shell]")]
+  const saved: Screenshot[] = []
+
+  try {
+    while (pending.length) {
+      let batch = pending.filter((el) => fitsViewport(el.getBoundingClientRect()))
+      if (!batch.length) {
+        // Larger than the viewport at this zoom: centre it and accept the visible part.
+        pending[0].scrollIntoView({ block: "center", inline: "center" })
+        await paint()
+        batch = pending.filter((el) => fitsViewport(el.getBoundingClientRect()))
+        if (!batch.length) batch = [pending[0]]
+      }
+      const regions = batch.map((el) => {
+        const rect = el.getBoundingClientRect()
+        return { deviceId: el.dataset.deviceShell ?? "device", x: rect.left, y: rect.top, width: rect.width, height: rect.height, radius: Number(el.dataset.radius ?? 0) }
+      })
+      saved.push(...(await native.screenshots.capture(regions, window.innerWidth)))
+      for (const el of batch) pending.splice(pending.indexOf(el), 1)
+    }
+  } finally {
+    if (canvas && scroll) canvas.scrollTo(scroll)
+  }
+  return saved
+}
+
+export const canCaptureNatively = isNative
 
 function cropOffsets(video: HTMLVideoElement, surface: string | undefined) {
   const chromeX = (window.outerWidth - window.innerWidth) / 2
@@ -30,9 +79,7 @@ function download(blob: Blob, name: string) {
 }
 
 export async function captureDevices(): Promise<number> {
-  const regions: Region[] = [...document.querySelectorAll<HTMLElement>("[data-device-shell]")]
-    .map((el) => ({ id: el.dataset.deviceShell ?? "device", rect: el.getBoundingClientRect(), radius: Number(el.dataset.radius ?? 0) }))
-    .filter(({ rect }) => rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth)
+  const regions = visibleRegions()
 
   if (!regions.length) return 0
 

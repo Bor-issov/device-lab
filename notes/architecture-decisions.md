@@ -54,3 +54,25 @@ Bridge installed with `install-links=true` (.npmrc) so the file: dependency is c
 - Lab posts to each frame's own src origin and attributes inbound messages by window identity + origin.
 - Trade-off: a Lab on another machine or a non-loopback hostname will not connect to the bridge. Revisit with an
   explicit allowlist if that is ever needed.
+
+## 2026-10-17 - Desktop app: Tauri v2 instead of a Next.js web server
+- Stack: Tauri v2 shell, Vite + React frontend, Rust backend on Tokio, SQLite (sqlx, embedded migrations).
+- No HTTP server any more: the adb routes became Tauri commands, so the loopback/Host/Origin guard is gone. Device
+  iframes load remote origins and get no IPC (capabilities only cover the main window's own origin).
+- One frontend entry. /demo/* hits the SPA fallback (Vite dev and Tauri's asset resolver both serve index.html)
+  and main.tsx renders the demo instead of the Lab, so the demo stays same-origin with the Lab.
+- Settings: Zustand persist with a custom StateStorage that calls settings_load/save (debounced 250 ms).
+  Browser dev (`pnpm dev`) keeps localStorage so the UI can still be iterated on with Playwright.
+- Custom presets register into the devices.ts lookup map so every getDevice() caller sees them.
+- Screenshots: WebKitGTK `webkit_web_view_get_snapshot` (visible region) through `with_webview`, cropped with cairo
+  on the GTK thread (cairo types are not Send), then written by Tokio. Visible-only snapshot means shells are
+  captured in passes: everything fully on screen, then each remaining shell scrolled into view. Linux only for
+  now; other platforms return an error.
+- Android stream: Tokio task loops `adb exec-out screencap -p` and sends raw bytes over a Tauri Channel (no JSON
+  encoding). Abort handles kept in AppState; the task also stops when the channel send fails.
+- Reachability: Rust TCP probe instead of no-cors fetch (the CSP only allows ipc/self connects).
+- CSP: default-src self, frame-src self + http/https (any dev server), img-src self/blob/data/asset.
+- Bridge trusts loopback plus the fixed desktop origins tauri://localhost and http(s)://tauri.localhost
+  (*.localhost resolves to loopback, so no remote site can hold these origins).
+- WHATWG URL gives tauri:// an opaque "null" origin while WebKit reports tauri://localhost, so frames.ts rebuilds
+  the origin from protocol + host for non-special schemes.

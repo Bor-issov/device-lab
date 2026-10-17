@@ -1,5 +1,3 @@
-"use client"
-
 import { DeviceList } from "./device-list"
 import { SourceField } from "./source-field"
 

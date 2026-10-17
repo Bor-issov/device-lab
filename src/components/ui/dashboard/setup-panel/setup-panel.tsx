@@ -1,5 +1,3 @@
-"use client"
-
 import { CodeBlock } from "@/components/ui/dashboard/primitives/code-block"
 
 const STEPS: { title: string; body?: string; code?: string; label?: string }[] = [
@@ -11,10 +9,10 @@ const STEPS: { title: string; body?: string; code?: string; label?: string }[] =
   {
     title: "Install it in your Expo app",
     code: `npx expo install react-dom react-native-web @expo/metro-runtime react-native-safe-area-context
-npm i ~/projects/device-lab/packages/preview-bridge/device-lab-preview-bridge-0.1.0.tgz
+npm i ~/projects/device-lab/packages/preview-bridge/device-lab-preview-bridge-0.2.0.tgz
 
 # after pulling bridge updates (same version number), force a fresh copy
-rm -rf node_modules/@device-lab && npm i ~/projects/device-lab/packages/preview-bridge/device-lab-preview-bridge-0.1.0.tgz`,
+rm -rf node_modules/@device-lab && npm i ~/projects/device-lab/packages/preview-bridge/device-lab-preview-bridge-0.2.0.tgz`,
   },
   {
     title: "Add the Babel plugin",

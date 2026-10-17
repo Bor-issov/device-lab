@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main Lab window. Device iframes load remote origins and get no IPC access.",
+  "windows": ["main"],
+  "permissions": ["core:default", "opener:default", "opener:allow-reveal-item-in-dir"]
+}

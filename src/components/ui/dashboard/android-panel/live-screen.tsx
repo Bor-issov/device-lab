@@ -1,11 +1,9 @@
-"use client"
-
 import { useEffect, useRef, useState } from "react"
-import type { AndroidInput } from "@/hooks/use-android"
+import type { AndroidInput } from "@/lib/android/types"
+import { native } from "@/lib/native"
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-// Polls adb screencap as fast as the device returns frames. Click to tap, drag to swipe.
+// Rust streams adb screencap frames over a Tauri channel as fast as the device returns them.
+// Click to tap, drag to swipe.
 export function LiveScreen({ serial, onInput }: { serial: string; onInput: (input: AndroidInput) => void }) {
   const [src, setSrc] = useState<string | null>(null)
   const [fps, setFps] = useState(0)
@@ -18,41 +16,24 @@ export function LiveScreen({ serial, onInput }: { serial: string; onInput: (inpu
     let frames = 0
     let windowStart = performance.now()
 
-    async function loop() {
-      while (alive) {
-        if (document.hidden) {
-          await sleep(500)
-          continue
-        }
-        try {
-          const res = await fetch(`/api/android/screen?serial=${encodeURIComponent(serial)}`, { cache: "no-store" })
-          if (!res.ok) {
-            await sleep(1000)
-            continue
-          }
-          const next = URL.createObjectURL(await res.blob())
-          if (!alive) {
-            URL.revokeObjectURL(next)
-            break
-          }
-          setSrc(next)
-          if (current) URL.revokeObjectURL(current)
-          current = next
-          frames++
-          const now = performance.now()
-          if (now - windowStart > 1000) {
-            setFps(Math.round((frames * 1000) / (now - windowStart)))
-            frames = 0
-            windowStart = now
-          }
-        } catch {
-          await sleep(1000)
-        }
+    const stop = native.android.stream(serial, (png) => {
+      if (!alive) return
+      const next = URL.createObjectURL(new Blob([png], { type: "image/png" }))
+      setSrc(next)
+      if (current) URL.revokeObjectURL(current)
+      current = next
+      frames++
+      const now = performance.now()
+      if (now - windowStart > 1000) {
+        setFps(Math.round((frames * 1000) / (now - windowStart)))
+        frames = 0
+        windowStart = now
       }
-    }
-    loop()
+    })
+
     return () => {
       alive = false
+      stop.then((fn) => fn()).catch(() => {})
       if (current) URL.revokeObjectURL(current)
     }
   }, [serial])
@@ -71,7 +52,6 @@ export function LiveScreen({ serial, onInput }: { serial: string; onInput: (inpu
     <div className="flex flex-col items-center gap-2">
       <div className="relative flex min-h-64 w-full items-center justify-center rounded-xl bg-background/70 p-3">
         {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             ref={imgRef}
             src={src}

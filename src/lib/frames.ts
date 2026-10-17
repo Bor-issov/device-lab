@@ -1,5 +1,3 @@
-"use client"
-
 import type { LabMessage } from "@/lib/protocol"
 
 // Live iframe registry. Messages from frames are attributed by window identity and origin, never by claimed id.
@@ -10,9 +8,12 @@ export function registerFrame(id: string, el: HTMLIFrameElement | null) {
   else frames.delete(id)
 }
 
-function originOf(el: HTMLIFrameElement) {
+// WHATWG URL gives non-special schemes (tauri://) an opaque "null" origin, but WebKit reports
+// tauri://localhost for the page itself and for frames served from it. Rebuild it by hand there.
+export function originOf(src: string) {
   try {
-    return new URL(el.src).origin
+    const url = new URL(src)
+    return url.origin !== "null" ? url.origin : `${url.protocol}//${url.host}`
   } catch {
     return null
   }
@@ -21,14 +22,14 @@ function originOf(el: HTMLIFrameElement) {
 // Target the frame's own origin so config never goes to a page the frame navigated away to.
 export function postToFrame(id: string, message: LabMessage) {
   const el = frames.get(id)
-  const origin = el && originOf(el)
+  const origin = el && originOf(el.src)
   if (origin && origin !== "null") el.contentWindow?.postMessage(message, origin)
 }
 
 export function deviceIdForMessage(event: MessageEvent) {
   if (!event.source) return null
   for (const [id, el] of frames) {
-    if (el.contentWindow === event.source && originOf(el) === event.origin) return id
+    if (el.contentWindow === event.source && originOf(el.src) === event.origin) return id
   }
   return null
 }
