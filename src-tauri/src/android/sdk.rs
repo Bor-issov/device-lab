@@ -81,6 +81,9 @@ pub fn resolve_tools(home: Option<&Path>) -> Tools {
     let candidates = [
         env_path("ANDROID_HOME"),
         env_path("ANDROID_SDK_ROOT"),
+        // Android Studio defaults: Windows, macOS, Linux.
+        env_path("LOCALAPPDATA").map(|d| d.join("Android").join("Sdk")),
+        home.map(|h| h.join("Library").join("Android").join("sdk")),
         home.map(|h| h.join("Android").join("Sdk")),
         Some(PathBuf::from("/opt/android-sdk")),
     ];
@@ -95,13 +98,22 @@ pub fn resolve_tools(home: Option<&Path>) -> Tools {
     }
 }
 
+/// A command that never opens a console window on Windows (the GUI app has none to inherit).
+fn command(program: &str) -> Command {
+    #[cfg_attr(not(windows), allow(unused_mut))]
+    let mut cmd = Command::new(program);
+    #[cfg(windows)]
+    cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    cmd
+}
+
 /// Runs a binary to completion with a timeout and returns stdout. Non-zero exit is an error.
 pub async fn run<I, S>(program: &str, args: I, timeout: Duration) -> AppResult<Vec<u8>>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let mut cmd = Command::new(program);
+    let mut cmd = command(program);
     cmd.args(args).stdin(Stdio::null()).kill_on_drop(true);
     let name = Path::new(program).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let output = tokio::time::timeout(timeout, cmd.output()).await.map_err(|_| msg(format!("{name} timed out")))??;
@@ -174,7 +186,7 @@ pub async fn status(tools: Tools, home: Option<&Path>) -> SdkStatus {
 
 /// Starts the emulator headless in its own process group so it outlives the Lab window.
 pub fn boot_avd(emulator: &str, avd: &str) -> AppResult<()> {
-    let mut cmd = Command::new(emulator);
+    let mut cmd = command(emulator);
     cmd.args(["-avd", avd, "-no-window", "-no-audio", "-no-boot-anim"]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     #[cfg(unix)]
     cmd.process_group(0);

@@ -1,5 +1,10 @@
 # Architecture Decisions
 
+## 2026-10-17 - Cross-platform installers via GitHub Actions, not cross-compiling
+Tauri cannot reliably cross-compile: macOS bundles need macOS (Xcode, codesign), Windows MSI needs WiX on Windows.
+Each OS builds natively on a GitHub runner with tauri-apps/tauri-action. ubuntu-22.04 for the oldest glibc so
+the AppImage/deb run on more distros. macOS ships one universal binary. Releases start as drafts.
+
 ## 2026-10-16 - iOS preview via react-native-web, not a simulator
 No Mac available or wanted. iOS Simulator only runs on macOS. Lab renders the Expo web build inside
 device-sized iframes. Real iOS pixels come from GitHub Actions macOS runners (free on public repos).

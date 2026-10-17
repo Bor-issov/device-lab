@@ -6,6 +6,9 @@
 - [ ] Install the Android SDK + create Pixel_Fold AVD, verify live view, fold/unfold, Expo Go open
 - [ ] Push integrations/ios-screenshots into the app repo and run the workflow once (untested so far)
 
+- [ ] Run release workflow once (manual dispatch), smoke-test installers on Windows and macOS
+- [ ] Code signing: Apple Developer ID + notarization, Windows Azure Trusted Signing
+- [ ] Auto-updates via tauri-plugin-updater + GitHub Releases latest.json
 - [ ] Native capture on Windows/macOS (WebView2 CapturePreview / WKWebView takeSnapshot)
 - [ ] Optional full-resolution capture (render at zoom 1 off screen) instead of on-screen scale
 - [ ] Persist custom presets in browser dev mode too (only SQLite today)

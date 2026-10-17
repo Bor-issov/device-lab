@@ -1,5 +1,13 @@
 # Features
 
+## [v2.1] Cross-platform release builds (2026-10-17)
+- .github/workflows/release.yml: tauri-action matrix (macos-latest universal, windows-latest, ubuntu-22.04)
+  builds on tag `v*` or manual run, uploads to a draft GitHub Release
+- Bundle targets "all": Windows .msi + NSIS .exe, macOS .dmg + .app, Linux .deb + .rpm + .AppImage
+- Android SDK lookup adds Windows (%LOCALAPPDATA%\Android\Sdk) and macOS (~/Library/Android/sdk) defaults
+- adb/emulator spawned with CREATE_NO_WINDOW on Windows (no console flash per screencap frame)
+- Unsigned builds for now (Gatekeeper / SmartScreen warnings); native capture still Linux-only
+
 ## [v2.0] Desktop app - Tauri v2 + Vite + Rust/Tokio + SQLite (2026-10-17)
 - Next.js removed. Frontend is Vite 8 + React 19 + TS + Tailwind 4 (same shadcn/GSAP/Zustand/TanStack UI, ported 1:1)
 - Single entry (index.html -> src/main.tsx); /demo/* served by SPA fallback renders the built-in demo (src/demo)
@@ -56,7 +64,8 @@
 - No Supabase yet (no server data needed for v1.0)
 
 ## Commands
-- `pnpm app` (tauri dev: Vite on 127.0.0.1:1420 + Rust) / `pnpm app:build` (deb, rpm, AppImage)
+- `pnpm app` (tauri dev: Vite on 127.0.0.1:1420 + Rust) / `pnpm app:build` (host OS installers)
+- Release: bump version in src-tauri/tauri.conf.json, `git tag vX.Y.Z && git push --tags`, publish the draft release
 - `pnpm dev` (UI only in a browser, native features off) / `pnpm build` / `pnpm typecheck` / `pnpm lint`
 - `cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test`
 - `pnpm bridge:pack` -> packages/preview-bridge/device-lab-preview-bridge-0.1.0.tgz
