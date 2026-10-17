@@ -9,6 +9,7 @@ import { isNative } from "@/lib/native"
 import { LAB_SOURCE, WINDOW_NAME_PREFIX } from "@/lib/protocol"
 import { buildConfig, useLab, usePose } from "@/lib/store"
 import { Dot, IconButton } from "@/components/ui/dashboard/primitives/controls"
+import { SetupDialog } from "@/components/ui/dashboard/setup-panel/setup-dialog"
 import { BezelCamera, Chin, Cutout, Hinge, HomeIndicator, SideKeys } from "./hardware"
 import { StatusBar } from "./status-bar"
 
@@ -139,11 +140,22 @@ export function DeviceFrame({ id, bare = false }: { id: string; bare?: boolean }
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="mr-2 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-              <Dot on={Boolean(runtime?.connected)} />
-              {runtime?.connected ? (runtime.route ?? "/") : "no bridge"}
-              {runtime?.errors ? <span className="text-foreground">· {runtime.errors} err</span> : null}
-            </span>
+            {runtime?.connected ? (
+              <span className="mr-2 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                <Dot on />
+                {runtime.route ?? "/"}
+                {runtime.errors ? <span className="text-foreground">· {runtime.errors} err</span> : null}
+              </span>
+            ) : (
+              <SetupDialog
+                trigger={
+                  <button type="button" className="mr-2 flex cursor-pointer items-center gap-1.5 rounded-md px-1 font-mono text-[11px] text-muted-foreground focus-visible:text-foreground">
+                    <Dot on={false} />
+                    no bridge
+                  </button>
+                }
+              />
+            )}
             <IconButton label="Rotate" onClick={() => rotate(id)}>
               <RotateCw />
             </IconButton>

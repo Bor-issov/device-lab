@@ -58,9 +58,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # What's new: shown in the GitHub release and in the app's update dialog (latest.json notes).
+      - id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<NOTES_EOF'
+            cat .github/release-notes.md
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Updater signatures (required): key pair from `pnpm tauri signer generate`, public half in tauri.conf.json.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # Code signing (optional). Add these repository secrets to sign builds:
           # macOS: APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
           #        APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
@@ -68,7 +81,8 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: Device Lab v__VERSION__
-          releaseBody: Download the installer for your OS from the assets below.
+          releaseBody: ${{ steps.notes.outputs.body }}
+          includeUpdaterJson: true
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

@@ -59,3 +59,9 @@
 ## 2026-10-17 - WebKitWebDriver not available on Arch webkit2gtk-4.1
 - tauri-driver end-to-end testing not possible out of the box; verified with a temporary in-app self-test
 - Status: worked around
+
+## 2026-10-18 - Plain web apps render under the drawn status bar / Dynamic Island
+- Netfocus (Next.js PWA, localhost:3000, no bridge): header starts at y=24, iPhone 17 Pro top inset is 62, so the
+  logo sits under the island and status bar overlay. Android (40/36) and SE (20) are tighter but clear.
+- Frames without the bridge get env(safe-area-inset-*) = 0, devicePixelRatio 1, (hover: hover), desktop UA
+- Status: open (proposed: browser viewport mode for frames without a bridge)

@@ -28,11 +28,19 @@ export function ShotsPanel() {
   }
 
   return (
-    <ul className="grid grid-cols-2 gap-3 px-5 pb-6">
+    // Masonry columns: every shot keeps its own shape (phones tall, tablets and landscape wide).
+    <ul className="columns-2 gap-3 px-5 pb-6">
       {shots.map((shot) => (
-        <li key={shot.id} className="flex flex-col gap-1.5">
-          <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-background/70 p-2.5">
-            <img src={native.screenshots.src(shot.path)} alt={`${getDevice(shot.deviceId)?.name ?? shot.deviceId} screenshot`} className="max-h-full max-w-full object-contain" loading="lazy" />
+        <li key={shot.id} className="mb-4 flex break-inside-avoid flex-col gap-1.5">
+          <div className="flex items-center justify-center rounded-xl bg-background/70 p-3">
+            <img
+              src={native.screenshots.src(shot.path)}
+              alt={`${getDevice(shot.deviceId)?.name ?? shot.deviceId} screenshot`}
+              width={shot.width}
+              height={shot.height}
+              className="h-auto max-h-80 w-auto max-w-full"
+              loading="lazy"
+            />
           </div>
           <div className="flex items-center gap-1">
             <div className="flex min-w-0 flex-1 flex-col">

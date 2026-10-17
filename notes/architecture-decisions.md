@@ -96,3 +96,15 @@ Bridge installed with `install-links=true` (.npmrc) so the file: dependency is c
 - Capability `external` (windows `external-*`): events, set-size, start-dragging only.
 - macOS: transparency needs the private API, so the window gets the charcoal background instead.
 - Outside state is not persisted: a restarted (or reloaded) Lab closes leftover windows and shows every frame docked.
+
+## 2026-10-18 - In-app updates through GitHub Releases
+- tauri-plugin-updater with one static endpoint: releases/latest/download/latest.json. tauri-action builds the
+  signed updater artifacts and merges latest.json across the macOS / Windows / Linux jobs.
+- Signing key: minisign pair from `tauri signer generate`, private key + password only in ~/.tauri on the dev
+  machine and in the repo secrets TAURI_SIGNING_PRIVATE_KEY(_PASSWORD). Losing it means shipped apps can never
+  update again (new key = manual reinstall for everyone).
+- Notes in the update dialog are latest.json `notes`, set at build time from .github/release-notes.md. Editing the
+  GitHub release body afterwards does not change what the app shows.
+- Drafts are invisible to /releases/latest, so an update reaches users only once the draft is published.
+- Linux: in-place update works for the AppImage; .deb/.rpm installs update through the package manager.
+- Windows installMode passive (progress bar, no prompts). 0.1.0 shipped without the updater: one manual install.

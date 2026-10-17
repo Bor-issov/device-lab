@@ -11,6 +11,18 @@ export function useAndroidStatus(enabled: boolean) {
   })
 }
 
+// Android tab and toolbar icon only show when adb or the emulator is found.
+export function useHasAndroidSdk() {
+  const { data } = useQuery({
+    queryKey: ["android-sdk"],
+    queryFn: native.android.status,
+    enabled: isNative,
+    staleTime: 60_000,
+    select: (s) => Boolean(s.adb || s.emulator),
+  })
+  return data ?? false
+}
+
 export function useBootAvd() {
   const qc = useQueryClient()
   return useMutation({

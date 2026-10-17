@@ -1,5 +1,17 @@
 # Features
 
+## [v2.3] Updates, panel cleanup, Android SDK (2026-10-18) - release v0.2.0
+- Check for updates (sidebar footer, desktop only): dialog with the release notes, Update (download + install +
+  relaunch, progress bar) and Dismiss. tauri-plugin-updater + plugin-process, endpoint = GitHub latest.json
+- Release workflow signs updater artifacts (TAURI_SIGNING_PRIVATE_KEY secrets) and writes latest.json;
+  release notes come from .github/release-notes.md (GitHub release body + update dialog)
+- Setup panel removed: "no bridge" label on a frame opens the bridge guide in a dialog
+- Android tab + toolbar icon only when adb or the emulator is found
+- Shots panel: masonry columns, each shot keeps its own shape (was squeezed into 3:4 boxes)
+- Dialog (shadcn base-nova) on the dark surface, no rings or borders
+- Android SDK installed on the dev machine: ~/Android/Sdk (API 36 google_apis x86_64), JDK 21 in ~/Android/jdk,
+  AVDs Pixel_Fold and Pixel_9
+
 ## [v2.2] Move frames outside (2026-10-18)
 - Right click inside a frame: WebKitGTK "Open Frame in New Window" replaced by "Move outside" (Linux);
   caption button "Move outside" on every platform (desktop only)
@@ -63,7 +75,7 @@
 
 ## Key files
 - src/main.tsx (entry), src/providers.tsx, src/styles/globals.css, index.html, vite.config.ts
-- src/components/ui/dashboard/{lab,sidebar,toolbar,canvas,device-frame,side-panel,android-panel,logs-panel,shots-panel,setup-panel,primitives}
+- src/components/ui/dashboard/{lab,sidebar,toolbar,canvas,device-frame,side-panel,android-panel,logs-panel,shots-panel,setup-panel,primitives,external-frame}
 - src/lib/{devices,store,protocol,frames,capture,fit,native,router}.ts, src/lib/android/types.ts
 - src/lib/external.ts, src/hooks/use-external-frames.ts, src/components/ui/dashboard/external-frame
 - src/demo/{demo-app.tsx,use-demo-bridge.ts}
@@ -79,7 +91,8 @@
 
 ## Commands
 - `pnpm app` (tauri dev: Vite on 127.0.0.1:1420 + Rust) / `pnpm app:build` (host OS installers)
-- Release: bump version in src-tauri/tauri.conf.json, `git tag vX.Y.Z && git push --tags`, publish the draft release
+- Release: bump version (tauri.conf.json, Cargo.toml, package.json), edit .github/release-notes.md,
+  `git tag vX.Y.Z && git push --tags`, publish the draft release (updater only sees published releases)
 - `pnpm dev` (UI only in a browser, native features off) / `pnpm build` / `pnpm typecheck` / `pnpm lint`
 - `cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test`
 - `pnpm bridge:pack` -> packages/preview-bridge/device-lab-preview-bridge-0.1.0.tgz

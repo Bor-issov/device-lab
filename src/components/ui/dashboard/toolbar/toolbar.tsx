@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Camera, Images, Maximize, Plug, RefreshCw, RotateCw, ScrollText, Smartphone } from "lucide-react"
+import { Camera, Images, Maximize, RefreshCw, RotateCw, ScrollText, Smartphone } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { IconButton, Segmented, Toggle } from "@/components/ui/dashboard/primitives/controls"
+import { useHasAndroidSdk } from "@/hooks/use-android"
 import { canCaptureNatively, captureDevices, captureNative } from "@/lib/capture"
 import { fitZoom } from "@/lib/fit"
 import { useLab, type PanelId } from "@/lib/store"
@@ -18,6 +19,7 @@ export function Toolbar() {
   const s = useLab()
   const errors = s.logs.filter((l) => l.level === "error" && !l.past).length
   const [capturing, setCapturing] = useState(false)
+  const hasAndroid = useHasAndroidSdk()
   const qc = useQueryClient()
 
   function fit() {
@@ -115,7 +117,7 @@ export function Toolbar() {
           <Camera />
         </IconButton>
         <span aria-hidden className="mx-1.5 h-4 w-px" />
-        {panelButton("android", "Android emulator", <Smartphone />)}
+        {hasAndroid && panelButton("android", "Android emulator", <Smartphone />)}
         {panelButton(
           "logs",
           errors ? `Logs (${errors} errors)` : "Logs",
@@ -125,7 +127,6 @@ export function Toolbar() {
           </span>
         )}
         {canCaptureNatively && panelButton("shots", "Screenshots", <Images />)}
-        {panelButton("setup", "Bridge setup", <Plug />)}
       </div>
     </header>
   )
