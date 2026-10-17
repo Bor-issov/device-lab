@@ -1,0 +1,5 @@
+- Move outside: right click a frame (or use its caption button) to put it in its own window on the desktop, with rotate, fold, reload, bring back and close above it
+- Check for updates: a button in the sidebar shows what is new and installs the update in place
+- Screenshots panel shows each shot at its own shape instead of squeezed boxes
+- Bridge setup guide opens from a frame's "no bridge" label instead of its own tab
+- Android tab only shows when an Android SDK is installed

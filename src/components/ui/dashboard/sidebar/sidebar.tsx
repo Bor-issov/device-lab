@@ -1,5 +1,6 @@
 import { DeviceList } from "./device-list"
 import { SourceField } from "./source-field"
+import { UpdateCheck } from "./update-check"
 
 export function Sidebar() {
   return (
@@ -10,6 +11,7 @@ export function Sidebar() {
       </div>
       <SourceField />
       <DeviceList />
+      <UpdateCheck />
     </aside>
   )
 }

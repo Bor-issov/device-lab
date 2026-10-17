@@ -5,7 +5,7 @@ import { isNative, native, type StoredLog } from "@/lib/native"
 import type { ColorScheme, LogLevel, PreviewConfig, TextDirection } from "@/lib/protocol"
 import { externalIdFromPath } from "@/lib/router"
 
-export type PanelId = "android" | "logs" | "shots" | "setup"
+export type PanelId = "android" | "logs" | "shots"
 
 export type DeviceRuntime = {
   connected: boolean
