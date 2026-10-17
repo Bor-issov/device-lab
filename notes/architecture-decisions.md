@@ -108,3 +108,10 @@ Bridge installed with `install-links=true` (.npmrc) so the file: dependency is c
 - Drafts are invisible to /releases/latest, so an update reaches users only once the draft is published.
 - Linux: in-place update works for the AppImage; .deb/.rpm installs update through the package manager.
 - Windows installMode passive (progress bar, no prompts). 0.1.0 shipped without the updater: one manual install.
+
+## 2026-10-18 - Public repo instead of a private update feed
+- The updater fetches latest.json and installers without credentials; a private repo answers 404.
+- Considered: a separate public releases repo (installers public, source private) and a per-machine read-only
+  token sent by the app. Chosen: make the repo public under MIT. No extra repo, token or workflow step, and the
+  shipped v0.2.0 endpoint starts working without a new release.
+- History scanned before the switch: no keys, tokens or env files. The signing key never entered the repo.

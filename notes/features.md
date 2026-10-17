@@ -1,5 +1,10 @@
 # Features
 
+## [v2.4] Open source (2026-10-18)
+- Repo Bor-issov/device-lab public under MIT (LICENSE, license fields in package.json and Cargo.toml)
+- README rewritten for the desktop app (features, install, bridge, development, releases)
+- Public repo makes the v0.2.0 update feed (releases/latest/download/latest.json) reachable without auth
+
 ## [v2.3] Updates, panel cleanup, Android SDK (2026-10-18) - release v0.2.0
 - Check for updates (sidebar footer, desktop only): dialog with the release notes, Update (download + install +
   relaunch, progress bar) and Dismiss. tauri-plugin-updater + plugin-process, endpoint = GitHub latest.json

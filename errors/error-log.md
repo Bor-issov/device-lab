@@ -65,3 +65,7 @@
   logo sits under the island and status bar overlay. Android (40/36) and SE (20) are tighter but clear.
 - Frames without the bridge get env(safe-area-inset-*) = 0, devicePixelRatio 1, (hover: hover), desktop UA
 - Status: open (proposed: browser viewport mode for frames without a bridge)
+
+## 2026-10-18 - Update button cannot reach latest.json
+- Repo was private: https://github.com/Bor-issov/device-lab/releases/latest/download/latest.json returned 404
+- Status: fixed (repo made public under MIT)
