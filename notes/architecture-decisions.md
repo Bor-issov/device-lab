@@ -81,3 +81,18 @@ Bridge installed with `install-links=true` (.npmrc) so the file: dependency is c
   (*.localhost resolves to loopback, so no remote site can hold these origins).
 - WHATWG URL gives tauri:// an opaque "null" origin while WebKit reports tauri://localhost, so frames.ts rebuilds
   the origin from protocol + host for non-special schemes.
+
+## 2026-10-18 - Frames moved outside into their own windows
+- One borderless, transparent WebviewWindow per frame (label `external-<id>`, page /external/<id> via the SPA
+  fallback). Created from an async Rust command so window creation never deadlocks on Windows.
+- The Lab window stays the only source of truth. External windows hold no persisted state (settings storage is a
+  no-op there), get an `external:state` snapshot on ready and on every relevant change (deduped by JSON), and send
+  actions (`external:action`) and bridge messages (`external:bridge`) back. Lab->frame messages for an outside
+  frame go as `external:post` and the external window posts them into its iframe.
+- Bridge needs no change: the external window has the same origin as the Lab, so labOrigin still matches.
+- Right click: WebKitGTK `context-menu` signal swaps the stock OpenFrameInNewWindow item for a GAction item.
+  The pointer position goes to the Lab, which finds the frame with elementFromPoint (the menu handler is
+  synchronous and cannot ask JS). WebView2/WKWebView have no such item; the caption button covers them.
+- Capability `external` (windows `external-*`): events, set-size, start-dragging only.
+- macOS: transparency needs the private API, so the window gets the charcoal background instead.
+- Outside state is not persisted: a restarted (or reloaded) Lab closes leftover windows and shows every frame docked.

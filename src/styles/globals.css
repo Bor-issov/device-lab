@@ -72,6 +72,11 @@
   body {
     @apply h-full overflow-hidden bg-background font-sans text-foreground;
   }
+  /* External frame windows are transparent; only the bar and the device shell paint. */
+  html[data-external],
+  html[data-external] body {
+    @apply bg-transparent;
+  }
   ::selection {
     @apply bg-primary text-primary-foreground;
   }

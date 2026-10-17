@@ -3,6 +3,7 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import { DEFAULT_SELECTION, getDevice, getInsets, getViewport, setCustomDevices, type DevicePose, type DeviceSpec } from "@/lib/devices"
 import { isNative, native, type StoredLog } from "@/lib/native"
 import type { ColorScheme, LogLevel, PreviewConfig, TextDirection } from "@/lib/protocol"
+import { externalIdFromPath } from "@/lib/router"
 
 export type PanelId = "android" | "logs" | "shots" | "setup"
 
@@ -42,12 +43,15 @@ type Runtime = {
   runtime: Record<string, DeviceRuntime>
   logs: LogEntry[]
   customDevices: DeviceSpec[]
+  /** Selected devices currently moved outside into their own window. */
+  external: string[]
 }
 
 type Actions = {
   set: <K extends keyof Settings>(key: K, value: Settings[K]) => void
   toggleDevice: (id: string) => void
   removeDevice: (id: string) => void
+  setExternal: (id: string, on: boolean) => void
   rotate: (id: string) => void
   rotateAll: () => void
   toggleFold: (id: string) => void
@@ -83,9 +87,13 @@ function flushSettings() {
   native.settings.save(name, value).catch((err) => console.error("settings_save", err))
 }
 
+// External frame windows mirror state pushed by the Lab and never write settings themselves.
+const readOnly = typeof window !== "undefined" && externalIdFromPath(window.location.pathname) !== null
+
 const sqliteStorage: StateStorage = {
   getItem: (name) => native.settings.load(name),
   setItem: (name, value) => {
+    if (readOnly) return
     pendingWrite = { name, value }
     clearTimeout(writeTimer)
     writeTimer = setTimeout(flushSettings, 250)
@@ -93,7 +101,7 @@ const sqliteStorage: StateStorage = {
   removeItem: (name) => native.settings.remove(name),
 }
 
-if (isNative) window.addEventListener("beforeunload", flushSettings)
+if (isNative && !readOnly) window.addEventListener("beforeunload", flushSettings)
 
 // Log history is appended to SQLite in batches.
 let logQueue: Omit<StoredLog, "id">[] = []
@@ -134,6 +142,7 @@ export const useLab = create<LabState>()(
       runtime: {},
       logs: [],
       customDevices: [],
+      external: [],
 
       set: (key, value) => set({ [key]: value } as Pick<Settings, typeof key>),
 
@@ -143,6 +152,9 @@ export const useLab = create<LabState>()(
         })),
 
       removeDevice: (id) => set((s) => ({ selected: s.selected.filter((d) => d !== id) })),
+
+      setExternal: (id, on) =>
+        set((s) => (s.external.includes(id) === on ? s : { external: on ? [...s.external, id] : s.external.filter((d) => d !== id) })),
 
       rotate: (id) =>
         set((s) => {

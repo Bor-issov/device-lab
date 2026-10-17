@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef } from "react"
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
-import { FoldHorizontal, RotateCcw, RotateCw, UnfoldHorizontal, X } from "lucide-react"
+import { FoldHorizontal, RotateCcw, RotateCw, SquareArrowOutUpRight, UnfoldHorizontal, X } from "lucide-react"
 import { getDevice, getHinge, getInsets, getViewport, isFoldable } from "@/lib/devices"
+import { moveOutside } from "@/lib/external"
 import { buildFrameUrl, postToFrame, registerFrame } from "@/lib/frames"
+import { isNative } from "@/lib/native"
 import { LAB_SOURCE, WINDOW_NAME_PREFIX } from "@/lib/protocol"
 import { buildConfig, useLab, usePose } from "@/lib/store"
 import { Dot, IconButton } from "@/components/ui/dashboard/primitives/controls"
@@ -14,7 +16,8 @@ gsap.registerPlugin(useGSAP)
 
 type Geometry = { outerW: number; outerH: number; screenW: number; screenH: number; screenX: number; screenY: number }
 
-export function DeviceFrame({ id }: { id: string }) {
+/** `bare` drops the caption: external windows draw their own bar above the shell. */
+export function DeviceFrame({ id, bare = false }: { id: string; bare?: boolean }) {
   const spec = getDevice(id)
   const pose = usePose(id)
   const zoom = useLab((s) => s.zoom)
@@ -127,35 +130,42 @@ export function DeviceFrame({ id }: { id: string }) {
         </div>
       </div>
 
-      <figcaption className="flex flex-col items-center gap-2">
-        <div className="flex items-baseline gap-3">
-          <span className="text-sm font-medium text-foreground">{spec.name}</span>
-          <span className="font-mono text-xs text-muted-foreground tabular-nums">
-            {geo.screenW} × {geo.screenH}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="mr-2 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-            <Dot on={Boolean(runtime?.connected)} />
-            {runtime?.connected ? (runtime.route ?? "/") : "no bridge"}
-            {runtime?.errors ? <span className="text-foreground">· {runtime.errors} err</span> : null}
-          </span>
-          <IconButton label="Rotate" onClick={() => rotate(id)}>
-            <RotateCw />
-          </IconButton>
-          {isFoldable(spec) && (
-            <IconButton label={pose.folded ? "Unfold" : "Fold"} onClick={() => toggleFold(id)} pressed={pose.folded}>
-              {pose.folded ? <UnfoldHorizontal /> : <FoldHorizontal />}
+      {!bare && (
+        <figcaption className="flex flex-col items-center gap-2">
+          <div className="flex items-baseline gap-3">
+            <span className="text-sm font-medium text-foreground">{spec.name}</span>
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {geo.screenW} × {geo.screenH}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="mr-2 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+              <Dot on={Boolean(runtime?.connected)} />
+              {runtime?.connected ? (runtime.route ?? "/") : "no bridge"}
+              {runtime?.errors ? <span className="text-foreground">· {runtime.errors} err</span> : null}
+            </span>
+            <IconButton label="Rotate" onClick={() => rotate(id)}>
+              <RotateCw />
             </IconButton>
-          )}
-          <IconButton label="Reload" onClick={() => reload(id)}>
-            <RotateCcw />
-          </IconButton>
-          <IconButton label="Remove" onClick={() => removeDevice(id)}>
-            <X />
-          </IconButton>
-        </div>
-      </figcaption>
+            {isFoldable(spec) && (
+              <IconButton label={pose.folded ? "Unfold" : "Fold"} onClick={() => toggleFold(id)} pressed={pose.folded}>
+                {pose.folded ? <UnfoldHorizontal /> : <FoldHorizontal />}
+              </IconButton>
+            )}
+            <IconButton label="Reload" onClick={() => reload(id)}>
+              <RotateCcw />
+            </IconButton>
+            {isNative && (
+              <IconButton label="Move outside" onClick={() => void moveOutside(id)}>
+                <SquareArrowOutUpRight />
+              </IconButton>
+            )}
+            <IconButton label="Remove" onClick={() => removeDevice(id)}>
+              <X />
+            </IconButton>
+          </div>
+        </figcaption>
+      )}
     </figure>
   )
 }
