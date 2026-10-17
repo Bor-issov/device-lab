@@ -7,6 +7,8 @@
 - Android SDK lookup adds Windows (%LOCALAPPDATA%\Android\Sdk) and macOS (~/Library/Android/sdk) defaults
 - adb/emulator spawned with CREATE_NO_WINDOW on Windows (no console flash per screencap frame)
 - Unsigned builds for now (Gatekeeper / SmartScreen warnings); native capture still Linux-only
+- Deps to latest: Rust 1.99 (rust-version 1.94), sqlx 0.9, TypeScript 6.0.3, ESLint 10, React 19.3.1, @types/node 26
+  - Held back: TypeScript 7 (typescript-eslint supports <6.1), gtk/cairo-rs 0.18 (Tauri/wry/webkit2gtk use gtk 0.18)
 
 ## [v2.0] Desktop app - Tauri v2 + Vite + Rust/Tokio + SQLite (2026-10-17)
 - Next.js removed. Frontend is Vite 8 + React 19 + TS + Tailwind 4 (same shadcn/GSAP/Zustand/TanStack UI, ported 1:1)
@@ -57,8 +59,8 @@
 - src-tauri/migrations/0001_init.sql, src-tauri/tauri.conf.json, src-tauri/capabilities/default.json
 
 ## Tech stack
-- Tauri 2.12 (WebKitGTK on Linux), Rust 1.91, Tokio, sqlx 0.8 (SQLite), cairo-rs (capture)
-- Vite 8.3, React 19.3, TypeScript 5.9, Tailwind CSS 4.3 (@tailwindcss/vite), Geist via fontsource
+- Tauri 2.12 (WebKitGTK on Linux), Rust 1.99, Tokio, sqlx 0.9 (SQLite), cairo-rs (capture)
+- Vite 8.3, React 19.3, TypeScript 6.0, Tailwind CSS 4.3 (@tailwindcss/vite), Geist via fontsource
 - shadcn (base-nova, Base UI): button, slider, tooltip (hover/transition classes stripped)
 - GSAP 3.15 + @gsap/react, Zustand 5 (persist -> SQLite settings key `device-lab`; localStorage in browser dev), TanStack Query 5
 - No Supabase yet (no server data needed for v1.0)
