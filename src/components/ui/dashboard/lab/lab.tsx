@@ -4,6 +4,7 @@ import { SidePanel } from "@/components/ui/dashboard/side-panel/side-panel"
 import { Sidebar } from "@/components/ui/dashboard/sidebar/sidebar"
 import { Toolbar } from "@/components/ui/dashboard/toolbar/toolbar"
 import { useBridgeMessages } from "@/hooks/use-bridge-messages"
+import { useExternalFrames } from "@/hooks/use-external-frames"
 import { getDevice } from "@/lib/devices"
 import { useLab } from "@/lib/store"
 
@@ -23,6 +24,7 @@ function useHydrated() {
 
 export function Lab() {
   useBridgeMessages()
+  useExternalFrames()
   const hydrated = useHydrated()
 
   if (!hydrated) return <main className="h-full w-full bg-background" />

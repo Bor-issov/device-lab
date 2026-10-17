@@ -1,5 +1,16 @@
 # Features
 
+## [v2.2] Move frames outside (2026-10-18)
+- Right click inside a frame: WebKitGTK "Open Frame in New Window" replaced by "Move outside" (Linux);
+  caption button "Move outside" on every platform (desktop only)
+- Frame spawns in its own borderless transparent window (label external-<id>, page /external/<id>),
+  real size unless taller/wider than the screen, drag bar on top: rotate, fold (foldables), reload, bring back, close
+- Lab stays source of truth: state pushed over Tauri events, actions and bridge messages sent back
+  (logs, route, errors, sync nav keep working for outside frames)
+- Canvas lists outside frames with "Bring back"; Alt+F4 on the window docks it; closing the Lab closes all
+- Right click inside an outside frame offers "Bring back" (Linux)
+- Not yet run in `pnpm app` (typecheck, lint, vite build, clippy, cargo test pass)
+
 ## [v2.1] Cross-platform release builds (2026-10-17)
 - .github/workflows/release.yml: tauri-action matrix (macos-latest universal, windows-latest, ubuntu-22.04)
   builds on tag `v*` or manual run, uploads to a draft GitHub Release
@@ -54,9 +65,10 @@
 - src/main.tsx (entry), src/providers.tsx, src/styles/globals.css, index.html, vite.config.ts
 - src/components/ui/dashboard/{lab,sidebar,toolbar,canvas,device-frame,side-panel,android-panel,logs-panel,shots-panel,setup-panel,primitives}
 - src/lib/{devices,store,protocol,frames,capture,fit,native,router}.ts, src/lib/android/types.ts
+- src/lib/external.ts, src/hooks/use-external-frames.ts, src/components/ui/dashboard/external-frame
 - src/demo/{demo-app.tsx,use-demo-bridge.ts}
-- src-tauri/src/{lib,db,capture,probe,state,error}.rs, src-tauri/src/android/{sdk,commands}.rs
-- src-tauri/migrations/0001_init.sql, src-tauri/tauri.conf.json, src-tauri/capabilities/default.json
+- src-tauri/src/{lib,db,capture,probe,state,error,external}.rs, src-tauri/src/android/{sdk,commands}.rs
+- src-tauri/migrations/0001_init.sql, src-tauri/tauri.conf.json, src-tauri/capabilities/{default,external}.json
 
 ## Tech stack
 - Tauri 2.12 (WebKitGTK on Linux), Rust 1.99, Tokio, sqlx 0.9 (SQLite), cairo-rs (capture)

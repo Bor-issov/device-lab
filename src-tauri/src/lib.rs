@@ -2,6 +2,7 @@ mod android;
 mod capture;
 mod db;
 mod error;
+mod external;
 mod probe;
 mod state;
 
@@ -14,6 +15,7 @@ pub fn run() {
         .setup(|app| {
             let pool = tauri::async_runtime::block_on(db::connect(app.handle()))?;
             app.manage(state::AppState::new(pool));
+            external::setup(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -30,6 +32,9 @@ pub fn run() {
             capture::screenshots_list,
             capture::screenshot_delete,
             probe::probe_url,
+            external::external_open,
+            external::external_close,
+            external::external_close_all,
             android::commands::android_status,
             android::commands::android_boot,
             android::commands::android_input,

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "external",
+  "description": "Frames moved outside the Lab. Events to and from the Lab, plus dragging and resizing their own window.",
+  "windows": ["external-*"],
+  "permissions": ["core:event:default", "core:window:allow-set-size", "core:window:allow-start-dragging"]
+}

@@ -104,6 +104,13 @@ export function getViewport(spec: DeviceSpec, pose: DevicePose) {
   return pose.landscape ? { width: h, height: w } : { width: w, height: h }
 }
 
+// Outer size of the drawn shell: screen plus bezel, plus the chin on home-button phones.
+export function getShellSize(spec: DeviceSpec, pose: DevicePose) {
+  const vp = getViewport(spec, pose)
+  const chin = (spec.chin ?? 0) * 2
+  return { width: vp.width + spec.bezel * 2 + (pose.landscape ? chin : 0), height: vp.height + spec.bezel * 2 + (pose.landscape ? 0 : chin) }
+}
+
 export function getInsets(spec: DeviceSpec, pose: DevicePose): Insets {
   const { top, bottom } = spec.insets
   if (!pose.landscape || spec.kind === "tablet") return { top, right: 0, bottom, left: 0 }

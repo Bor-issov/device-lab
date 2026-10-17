@@ -45,6 +45,11 @@ export const native = {
     remove: (id: number) => call<void>("screenshot_delete", { id }),
     src: (path: string) => convertFileSrc(path),
   },
+  external: {
+    open: (id: string, title: string, width: number, height: number) => call<void>("external_open", { id, title, width, height }),
+    close: (id: string) => call<void>("external_close", { id }),
+    closeAll: () => call<void>("external_close_all"),
+  },
   probe: (url: string) => call<boolean>("probe_url", { url }),
   android: {
     status: () => call<SdkStatus>("android_status"),

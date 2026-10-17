@@ -23,7 +23,7 @@ export function Toolbar() {
   function fit() {
     const canvas = document.getElementById("lab-canvas")
     if (!canvas) return
-    s.set("zoom", fitZoom(s.selected, s.poses, { width: canvas.clientWidth, height: canvas.clientHeight }))
+    s.set("zoom", fitZoom(s.selected.filter((id) => !s.external.includes(id)), s.poses, { width: canvas.clientWidth, height: canvas.clientHeight }))
   }
 
   async function capture() {

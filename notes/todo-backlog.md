@@ -1,6 +1,7 @@
 # Todo Backlog
 
 ## Next
+- [ ] Run "Move outside" in `pnpm app`: right click menu item, transparent window on KDE Wayland, drag, rotate resize, bring back, Alt+F4, Lab close
 - [x] Bridge verified against examples/expo-app (NativeWind 4.2.7 + Reanimated 4 + Expo Router)
 - [ ] Re-test with Gluestack once Gluestack v5 / NativeWind v5 stop crashing on react-native-web 0.21
 - [ ] Install the Android SDK + create Pixel_Fold AVD, verify live view, fold/unfold, Expo Go open
