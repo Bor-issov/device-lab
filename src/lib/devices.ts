@@ -2,7 +2,7 @@
 // Foldable dp values are derived from panel pixels / density and are close approximations.
 
 export type DeviceOs = "ios" | "android"
-export type DeviceGroup = "iPhone" | "iPad" | "Foldable" | "Android" | "Tablet"
+export type DeviceGroup = "iPhone" | "iPad" | "Foldable" | "Android" | "Tablet" | "Custom"
 export type DeviceKind = "phone" | "tablet" | "fold" | "flip"
 export type Cutout = "island" | "notch" | "punch" | "none"
 
@@ -56,8 +56,41 @@ export const DEFAULT_SELECTION = ["iphone-17-pro", "ipad-pro-11", "galaxy-z-fold
 
 const byId = new Map(DEVICES.map((d) => [d.id, d]))
 
+// User presets live in SQLite and are registered here once loaded, so every getDevice() caller
+// (frames, fit, logs, config) sees them without knowing where they came from.
+let custom: DeviceSpec[] = []
+
+export function setCustomDevices(specs: DeviceSpec[]) {
+  for (const d of custom) byId.delete(d.id)
+  custom = specs
+  for (const d of custom) byId.set(d.id, d)
+}
+
 export function getDevice(id: string) {
   return byId.get(id)
+}
+
+export type PresetInput = { name: string; os: DeviceOs; width: number; height: number }
+
+// Sensible hardware defaults for a custom size: tablet past 600 on the short side,
+// island on iOS phones, punch-hole on Android phones.
+export function presetFromInput(input: PresetInput, id = `custom-${Date.now().toString(36)}`): DeviceSpec {
+  const short = Math.min(input.width, input.height)
+  const tablet = short >= 600
+  const ios = input.os === "ios"
+  return {
+    id,
+    name: input.name.trim(),
+    group: "Custom",
+    os: input.os,
+    kind: tablet ? "tablet" : "phone",
+    size: [short, Math.max(input.width, input.height)],
+    dpr: ios ? (tablet ? 2 : 3) : tablet ? 2 : 2.625,
+    radius: tablet ? 18 : ios ? 55 : 36,
+    bezel: tablet ? 18 : 11,
+    cutout: tablet ? "none" : ios ? "island" : "punch",
+    insets: tablet ? { top: ios ? 24 : 32, bottom: ios ? 20 : 24 } : ios ? { top: 62, bottom: 34 } : { top: 40, bottom: 24 },
+  }
 }
 
 export function isFoldable(spec: DeviceSpec) {

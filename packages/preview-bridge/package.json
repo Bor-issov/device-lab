@@ -1,6 +1,6 @@
 {
   "name": "@device-lab/preview-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Connects an Expo web build to Device Lab: per-device safe areas, color scheme, Platform.OS, logs and navigation sync.",
   "main": "src/index.ts",
   "react-native": "src/index.ts",

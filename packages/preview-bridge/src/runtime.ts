@@ -2,7 +2,7 @@ import { Appearance, PixelRatio } from "react-native"
 import { getPreviewConfig, isInLab, labOrigin, setPreviewConfig, subscribe } from "./config"
 import { BRIDGE_SOURCE, LAB_SOURCE, type LogLevel } from "./protocol"
 
-const VERSION = "0.1.0"
+const VERSION = "0.2.0"
 const STYLE_ID = "devicelab-bridge"
 
 type Post = (msg: { type: "hello"; version: string } | { type: "route"; path: string } | { type: "log"; level: LogLevel; message: string }) => void

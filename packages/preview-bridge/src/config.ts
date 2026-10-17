@@ -5,7 +5,9 @@ import { WINDOW_NAME_PREFIX, type PreviewConfig } from "./protocol"
 //
 // Trust boundary: whoever embeds the app controls window.name and postMessage, so the bridge only
 // activates in development builds and only for a Lab served from a loopback origin. Every config
-// is validated field by field before use.
+// is validated field by field before use. Accepted Lab origins: loopback http(s) (browser and
+// `tauri dev`) and the Device Lab desktop app's own origins (tauri://localhost on Linux/macOS,
+// http(s)://tauri.localhost on Windows). None of these can be claimed by a remote website.
 
 declare const __DEV__: boolean | undefined
 
@@ -15,12 +17,13 @@ const isDev =
 const hasDom = typeof window !== "undefined" && typeof window.location !== "undefined" && typeof document !== "undefined"
 
 const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/
+const DESKTOP_ORIGINS = new Set(["tauri://localhost", "http://tauri.localhost", "https://tauri.localhost"])
 
 const num = (v: unknown, min: number, max: number) => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max
 const oneOf = <T extends string>(v: unknown, values: readonly T[]): v is T => typeof v === "string" && (values as readonly string[]).includes(v)
 
 export function isLoopbackOrigin(origin: unknown): origin is string {
-  return typeof origin === "string" && LOOPBACK_ORIGIN.test(origin)
+  return typeof origin === "string" && (LOOPBACK_ORIGIN.test(origin) || DESKTOP_ORIGINS.has(origin))
 }
 
 export function parseConfig(raw: unknown): PreviewConfig | null {

@@ -26,3 +26,18 @@
 - postMessage: pin targetOrigin, check event.origin + event.source, validate payload schema, normalise paths with
   `new URL(path, location.origin)` and compare origins.
 - Gate embed bridges to development builds.
+
+## 2026-10-17 - cairo PNG output in a Tauri app
+- Add `cairo-rs = { version = "0.18", features = ["png"] }` for target linux (same version gtk uses).
+
+## 2026-10-17 - Capturing a webview larger than the screen
+- Snapshot APIs return the visible region. Capture what fits, scrollIntoView the rest one by one, restore scroll.
+
+## 2026-10-17 - Sync nav and newly mounted frames
+- Track frames that just said hello; their first route is a boot route, not a navigation. Send them to the
+  shared route instead of broadcasting theirs.
+
+## 2026-10-17 - Verifying native Tauri features without WebDriver
+- Temporary module imported from main.tsx behind `import.meta.env.VITE_SELFTEST`, reports through a command
+  into SQLite; build with `VITE_SELFTEST=1 pnpm tauri build --debug --no-bundle`, read results with sqlite3,
+  delete the module afterwards.

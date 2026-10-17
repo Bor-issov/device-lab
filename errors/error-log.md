@@ -43,3 +43,19 @@
 - [MEDIUM] bridge posted routes/console output with targetOrigin "*"
 - [MEDIUM] bridge accepted config/navigate from any parent origin; "//host" paths passed the startsWith("/") check
 - Status: fixed on fix/security-hardening
+
+## 2026-10-17 - cairo ImageSurface has no write_to_png
+- `no method named write_to_png found for struct ImageSurface` (cairo-rs re-exported by gtk lacks the png feature)
+- Status: fixed
+
+## 2026-10-17 - Native capture cut off devices below the fold
+- WebKit snapshot covers the visible viewport only; shells partly off screen came out half transparent
+- Status: fixed (capture in passes, scroll each remaining shell into view)
+
+## 2026-10-17 - Sync nav reset every frame when a device was added
+- New frame reports its boot route (/demo); with Sync nav on that route was broadcast to all frames
+- Status: fixed (first route after hello is answered with navigate to the shared route instead)
+
+## 2026-10-17 - WebKitWebDriver not available on Arch webkit2gtk-4.1
+- tauri-driver end-to-end testing not possible out of the box; verified with a temporary in-app self-test
+- Status: worked around

@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Dot } from "@/components/ui/dashboard/primitives/controls"
 import { useDevServer } from "@/hooks/use-dev-server"
