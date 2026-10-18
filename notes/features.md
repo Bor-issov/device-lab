@@ -1,5 +1,9 @@
 # Features
 
+## [v2.6] Release v0.3.0 (2026-10-18)
+- Version 0.3.0 (tauri.conf.json, Cargo.toml, package.json), release notes for real sizes and new catalog
+- Update check times out after 20 s
+
 ## [v2.5] Real-world device sizes, 2025-2026 catalog (2026-10-18)
 - Catalog limited to the last two years: iPhone 18 Pro/Pro Max, iPhone Duo, Air, 17, 17e; iPad Pro M5, Air M4,
   iPad A16, mini A17 Pro; MacBook Pro 16/14, Air 15/13, MacBook Neo, iMac 24; Galaxy Z TriFold, Fold 8 Ultra,
