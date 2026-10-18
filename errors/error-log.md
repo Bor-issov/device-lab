@@ -69,3 +69,17 @@
 ## 2026-10-18 - Update button cannot reach latest.json
 - Repo was private: https://github.com/Bor-issov/device-lab/releases/latest/download/latest.json returned 404
 - Status: fixed (repo made public under MIT)
+
+## 2026-10-18 - Foldables rescale and stretch on fold / unfold
+- Shells were drawn from CSS points: Fold 7 cover 411x960 vs inner 750x832, so folding made the phone 15% taller
+  ("stretch") although the real body keeps its 158.4 mm height. Outside windows also re-fit zoom per pose, so the
+  device zoomed in when folded and out when unfolded.
+- Fold tween animated the iframe width/height for 0.55 s: ~30 resize events per fold hit the page's
+  ScrollTrigger / Lenis / matchMedia mid-layout.
+- Status: fixed (physical mm geometry, iframe resized once, outside-window zoom fixed across fold states)
+
+## 2026-10-18 - Frames show missing elements right after switching to localhost:3000
+- Netfocus (Next dev) hero sits at "$0" with faded text in every frame for ~6 s after load, then completes on its
+  own. Cause is Next dev compiling/hydrating for several frames at once, not the Lab: iframe rAF measured at a
+  steady 30 fps in WebKitGTK 2.54 (also under visibility:hidden / opacity:0 parents and during fold).
+- Status: not a Lab bug (verified in WebKitGTK with snapshots at 5 s and 12 s, no interaction)

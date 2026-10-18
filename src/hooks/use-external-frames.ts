@@ -21,6 +21,7 @@ function snapshot(id: string, s: LabState): ExternalState {
     nonce: s.nonces[id] ?? 0,
     runtime: s.runtime[id],
     customDevices: s.customDevices,
+    pxPerMm: s.pxPerMm,
   }
 }
 

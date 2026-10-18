@@ -4,6 +4,7 @@ mod db;
 mod error;
 mod external;
 mod probe;
+mod screen;
 mod state;
 
 use tauri::Manager;
@@ -34,6 +35,7 @@ pub fn run() {
             capture::screenshots_list,
             capture::screenshot_delete,
             probe::probe_url,
+            screen::screen_px_per_mm,
             external::external_open,
             external::external_close,
             external::external_close_all,

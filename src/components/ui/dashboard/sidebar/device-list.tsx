@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils"
 import { PresetForm } from "./preset-form"
 
 function DeviceRow({ d, on, onToggle, onDelete }: { d: DeviceSpec; on: boolean; onToggle: () => void; onDelete?: () => void }) {
-  const [w, h] = d.cover ?? d.size
+  const [w, h] = d.panels[0].size
+  // Foldables list each state's width, most folded first.
+  const dims = d.panels.length > 1 ? d.panels.map((p) => p.size[0]).reverse().join("/") : `${w}×${h}`
   return (
     <li className="flex items-center gap-0.5">
       <button
@@ -21,7 +23,7 @@ function DeviceRow({ d, on, onToggle, onDelete }: { d: DeviceSpec; on: boolean; 
       >
         <Dot on={on} />
         <span className="flex-1 truncate">{d.name}</span>
-        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{d.cover ? `${w}/${d.size[0]}` : `${w}×${h}`}</span>
+        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{dims}</span>
       </button>
       {onDelete && (
         <IconButton label={`Delete ${d.name}`} side="right" onClick={onDelete}>

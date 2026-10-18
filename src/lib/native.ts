@@ -1,6 +1,6 @@
 import { Channel, convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core"
 import type { AndroidInput, SdkStatus } from "@/lib/android/types"
-import type { DeviceSpec } from "@/lib/devices"
+import type { Preset } from "@/lib/devices"
 import type { LogLevel } from "@/lib/protocol"
 
 // Typed wrappers around the Rust commands. The UI also runs in a plain browser (`pnpm dev`)
@@ -19,9 +19,6 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
 export type StoredLog = { id: number; deviceId: string; level: LogLevel; message: string; at: number }
 export type Screenshot = { id: number; deviceId: string; path: string; width: number; height: number; createdAt: number }
 export type CaptureRegion = { deviceId: string; x: number; y: number; width: number; height: number; radius: number }
-export type Preset = Pick<DeviceSpec, "id" | "name" | "os" | "size" | "dpr" | "radius" | "bezel" | "cutout" | "insets"> & {
-  kind: "phone" | "tablet"
-}
 
 export const native = {
   settings: {
@@ -51,6 +48,8 @@ export const native = {
     closeAll: () => call<void>("external_close_all"),
   },
   probe: (url: string) => call<boolean>("probe_url", { url }),
+  /** CSS px per millimetre on the monitor showing this window; null when the system does not say. */
+  screenPxPerMm: () => call<number | null>("screen_px_per_mm"),
   android: {
     status: () => call<SdkStatus>("android_status"),
     boot: (avd: string) => call<void>("android_boot", { avd }),

@@ -1,4 +1,4 @@
-import type { DevicePose, DeviceSpec } from "@/lib/devices"
+import { IMAC_STAND, isComputer, isFolded, LAPTOP_BASE, type DevicePose, type DeviceSpec, type HingeAxis } from "@/lib/devices"
 import type { ColorScheme } from "@/lib/protocol"
 
 type Side = "left" | "right" | "top"
@@ -11,12 +11,6 @@ const KEYS: Record<string, Key[]> = {
     { side: "left", at: 0.27, len: 0.075 },
     { side: "left", at: 0.36, len: 0.075 },
     { side: "right", at: 0.3, len: 0.11 },
-  ],
-  "iphone-se": [
-    { side: "left", at: 0.17, len: 0.035 },
-    { side: "left", at: 0.25, len: 0.07 },
-    { side: "left", at: 0.34, len: 0.07 },
-    { side: "right", at: 0.25, len: 0.08 },
   ],
   ipad: [
     { side: "top", at: 0.84, len: 0.07 },
@@ -42,34 +36,40 @@ const KEYS: Record<string, Key[]> = {
 }
 
 function keySet(spec: DeviceSpec) {
-  if (spec.os === "ios") return spec.kind === "tablet" ? KEYS.ipad : spec.chin ? KEYS["iphone-se"] : KEYS.iphone
+  if (isComputer(spec)) return []
+  if (spec.os === "ios") return spec.kind === "tablet" ? KEYS.ipad : spec.kind === "fold" ? KEYS.fold : KEYS.iphone
   if (spec.kind === "tablet") return KEYS["android-tablet"]
-  if (spec.kind === "fold" || spec.kind === "flip") return KEYS[spec.kind]
+  if (spec.kind === "flip") return KEYS.flip
+  if (spec.kind === "fold" || spec.kind === "trifold") return KEYS.fold
   return KEYS.android
 }
 
-const KEY_DEPTH = 3
+// Keys stand 0.8 mm proud of the frame.
+const KEY_DEPTH_MM = 0.8
 
 // Landscape is the device turned counter-clockwise: left edge -> bottom, right -> top, top -> left.
-export function SideKeys({ spec, pose, width, height }: { spec: DeviceSpec; pose: DevicePose; width: number; height: number }) {
+export function SideKeys({ spec, pose, width, height, pxPerMm }: { spec: DeviceSpec; pose: DevicePose; width: number; height: number; pxPerMm: number }) {
+  const depth = Math.max(1.5, KEY_DEPTH_MM * pxPerMm)
+  const thick = depth + 2
   return keySet(spec).map((key, i) => {
     let style: React.CSSProperties
     if (!pose.landscape) {
       style =
         key.side === "top"
-          ? { top: -KEY_DEPTH, left: key.at * width, width: key.len * width, height: KEY_DEPTH + 2 }
-          : { [key.side]: -KEY_DEPTH, top: key.at * height, height: key.len * height, width: KEY_DEPTH + 2 }
+          ? { top: -depth, left: key.at * width, width: key.len * width, height: thick }
+          : { [key.side]: -depth, top: key.at * height, height: key.len * height, width: thick }
     } else if (key.side === "left") {
-      style = { bottom: -KEY_DEPTH, left: key.at * width, width: key.len * width, height: KEY_DEPTH + 2 }
+      style = { bottom: -depth, left: key.at * width, width: key.len * width, height: thick }
     } else if (key.side === "right") {
-      style = { top: -KEY_DEPTH, left: key.at * width, width: key.len * width, height: KEY_DEPTH + 2 }
+      style = { top: -depth, left: key.at * width, width: key.len * width, height: thick }
     } else {
-      style = { left: -KEY_DEPTH, top: (1 - key.at - key.len) * height, height: key.len * height, width: KEY_DEPTH + 2 }
+      style = { left: -depth, top: (1 - key.at - key.len) * height, height: key.len * height, width: thick }
     }
     return <span key={i} aria-hidden className="absolute rounded-sm bg-bezel-key" style={style} />
   })
 }
 
+// Drawn in page CSS px (inside the scaled screen layer).
 export function Cutout({ spec, pose }: { spec: DeviceSpec; pose: DevicePose }) {
   const side = pose.landscape
   if (spec.cutout === "island") {
@@ -95,7 +95,7 @@ export function Cutout({ spec, pose }: { spec: DeviceSpec; pose: DevicePose }) {
     )
   }
   if (spec.cutout === "punch") {
-    const size = spec.kind === "flip" && pose.folded ? 9 : 11
+    const size = spec.kind === "flip" && isFolded(spec, pose) ? 9 : 11
     return (
       <span
         aria-hidden
@@ -107,44 +107,29 @@ export function Cutout({ spec, pose }: { spec: DeviceSpec; pose: DevicePose }) {
   return null
 }
 
-// Front camera that sits in the bezel (tablets): long edge on iPad, short edge on Android tablets.
-export function BezelCamera({ spec, pose, bezel }: { spec: DeviceSpec; pose: DevicePose; bezel: number }) {
-  if (spec.kind !== "tablet") return null
-  const onTop = spec.os === "ios" ? pose.landscape : !pose.landscape
-  const offset = bezel / 2 - 3
+// Front camera that sits in the bezel: long edge on iPad, short edge on Android tablets, top of the
+// lid on Macs. `x` / `y` are the bezel widths in px; the camera sits in the middle of its bezel.
+export function BezelCamera({ spec, pose, x, y, pxPerMm }: { spec: DeviceSpec; pose: DevicePose; x: number; y: number; pxPerMm: number }) {
+  if (spec.kind !== "tablet" && !isComputer(spec)) return null
+  const onTop = isComputer(spec) || (spec.os === "ios" ? pose.landscape : !pose.landscape)
+  const size = Math.max(3, 1.6 * pxPerMm)
   return (
     <span
       aria-hidden
-      className="absolute z-10 size-1.5 rounded-full bg-cutout"
-      style={onTop ? { top: offset, left: "50%", translate: "-50% 0" } : { right: offset, top: "50%", translate: "0 -50%" }}
+      className="absolute z-10 rounded-full bg-cutout"
+      style={{
+        width: size,
+        height: size,
+        ...(onTop ? { top: y / 2, left: "50%", translate: "-50% -50%" } : { right: x / 2, top: "50%", translate: "50% -50%" }),
+      }}
     />
   )
 }
 
-// iPhone SE style chin: earpiece above the screen, home button below (sides in landscape).
-export function Chin({ spec, pose, width, height }: { spec: DeviceSpec; pose: DevicePose; width: number; height: number }) {
-  if (!spec.chin) return null
-  const chin = spec.chin + spec.bezel
-  return (
-    <>
-      <span
-        aria-hidden
-        className="absolute rounded-full bg-bezel-key"
-        style={pose.landscape ? { left: chin / 2 - 3, top: height / 2 - 23, width: 6, height: 46 } : { top: chin / 2 - 3, left: width / 2 - 23, width: 46, height: 6 }}
-      />
-      <span
-        aria-hidden
-        className="absolute size-11 rounded-full bg-bezel-key"
-        style={pose.landscape ? { right: chin / 2 - 22, top: height / 2 - 22 } : { bottom: chin / 2 - 22, left: width / 2 - 22 }}
-      />
-    </>
-  )
-}
-
 export function HomeIndicator({ spec, pose, scheme }: { spec: DeviceSpec; pose: DevicePose; scheme: ColorScheme }) {
-  if (spec.chin) return null
+  if (isComputer(spec)) return null
   const color = scheme === "dark" ? "bg-(--paper)" : "bg-(--ink)"
-  const width = spec.os === "android" ? 108 : spec.kind === "tablet" ? 200 : pose.landscape ? 210 : 134
+  const width = spec.os === "android" ? 108 : spec.kind !== "phone" ? 200 : pose.landscape ? 210 : 134
   const thickness = spec.os === "android" ? 4 : 5
   return (
     <span
@@ -155,13 +140,37 @@ export function HomeIndicator({ spec, pose, scheme }: { spec: DeviceSpec; pose: 
   )
 }
 
-export function Hinge({ axis }: { axis: "vertical" | "horizontal" }) {
-  const band = axis === "vertical" ? "inset-y-0 left-1/2 w-4 -translate-x-1/2" : "inset-x-0 top-1/2 h-4 -translate-y-1/2"
-  const line = axis === "vertical" ? "inset-y-0 left-1/2 w-px -translate-x-1/2" : "inset-x-0 top-1/2 h-px -translate-y-1/2"
+export function Hinges({ axis, at }: { axis: HingeAxis; at: number[] }) {
+  const vertical = axis === "vertical"
+  return at.map((f) => (
+    <span key={f} aria-hidden className="pointer-events-none absolute z-10" style={vertical ? { top: 0, bottom: 0, left: `${f * 100}%` } : { left: 0, right: 0, top: `${f * 100}%` }}>
+      <span className={`absolute bg-black/5 ${vertical ? "inset-y-0 w-4 -translate-x-1/2" : "inset-x-0 h-4 -translate-y-1/2"}`} />
+      <span className={`absolute bg-black/15 ${vertical ? "inset-y-0 w-px -translate-x-1/2" : "inset-x-0 h-px -translate-y-1/2"}`} />
+    </span>
+  ))
+}
+
+/** Laptop base seen from the front, under a lid `width` px wide. */
+export function LaptopBase({ width, top, pxPerMm }: { width: number; top: number; pxPerMm: number }) {
+  const height = LAPTOP_BASE.height * pxPerMm
+  const overhang = LAPTOP_BASE.overhang * pxPerMm
+  const scoop = width * LAPTOP_BASE.scoop
   return (
-    <>
-      <span aria-hidden className={`pointer-events-none absolute z-10 bg-black/5 ${band}`} />
-      <span aria-hidden className={`pointer-events-none absolute z-10 bg-black/15 ${line}`} />
-    </>
+    <div aria-hidden className="absolute left-0 bg-bezel-key" style={{ top, width: width + overhang * 2, height, borderRadius: `0 0 ${height * 1.2}px ${height * 1.2}px` }}>
+      <span className="absolute top-0 left-1/2 -translate-x-1/2 bg-bezel" style={{ width: scoop, height: height * 0.35, borderRadius: `0 0 ${height}px ${height}px` }} />
+    </div>
+  )
+}
+
+/** iMac stand seen from the front, centred under a head `width` px wide. */
+export function ImacStand({ width, top, pxPerMm }: { width: number; top: number; pxPerMm: number }) {
+  const neck = width * IMAC_STAND.neck
+  const height = IMAC_STAND.height * pxPerMm
+  const foot = IMAC_STAND.foot * pxPerMm
+  return (
+    <div aria-hidden className="absolute left-1/2 -translate-x-1/2" style={{ top, width: neck, height }}>
+      <span className="absolute inset-x-0 top-0 bg-bezel-key" style={{ bottom: foot }} />
+      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-sm bg-bezel-key" style={{ width: neck * 1.04, height: foot }} />
+    </div>
   )
 }

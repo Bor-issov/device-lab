@@ -41,3 +41,15 @@
 - Temporary module imported from main.tsx behind `import.meta.env.VITE_SELFTEST`, reports through a command
   into SQLite; build with `VITE_SELFTEST=1 pnpm tauri build --debug --no-bundle`, read results with sqlite3,
   delete the module afterwards.
+
+## 2026-10-18 - Real-world device sizes and stable folds
+- Each panel stores its diagonal (inches) and body (mm); geometry = mm x px-per-mm x zoom. The page keeps its
+  CSS viewport and is scaled into the screen with one transform, so the body height stays fixed across folds.
+- Rotate / fold: the iframe takes the final viewport in one step; only the shell tweens and the page fades in.
+- Outside windows pick one zoom that fits every fold state, so folding never rescales the device.
+- px per mm on Linux: GDK monitor geometry / width_mm (screen_px_per_mm command), else 96 / 25.4.
+
+## 2026-10-18 - Checking iframe rAF / rendering in WebKitGTK without the Tauri app
+- `python3 -I` script with gi WebKit2 4.1 + Gtk 3, `GDK_BACKEND=x11`, snapshot via Gdk.pixbuf_get_from_window
+  (no pycairo). Serve `dist/` with `python3 -m http.server` on 127.0.0.1; seed localStorage `device-lab` first.
+- Cross-origin frames can be scrolled with a UserScript (ALL_FRAMES) that listens for postMessage.
