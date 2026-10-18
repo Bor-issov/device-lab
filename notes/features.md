@@ -1,5 +1,18 @@
 # Features
 
+## [v2.5] Real-world device sizes, 2025-2026 catalog (2026-10-18)
+- Catalog limited to the last two years: iPhone 18 Pro/Pro Max, iPhone Duo, Air, 17, 17e; iPad Pro M5, Air M4,
+  iPad A16, mini A17 Pro; MacBook Pro 16/14, Air 15/13, MacBook Neo, iMac 24; Galaxy Z TriFold, Fold 8 Ultra,
+  Fold 8, Flip 8, Pixel 11 Pro Fold, Huawei Mate XTs, Mate X7, Xiaomi Mix Flip 2; Pixel 11 Pro XL/Pro/11,
+  Galaxy S26 Ultra/S26, Xiaomi 17 Ultra/17, Huawei Pura 80 Ultra; Galaxy Tab S11 Ultra/S11, Xiaomi Pad 8 Pro
+- Retired ids map to their successors on load (settings v2 migration), poses become fold indexes
+- Panels: size (CSS px / dp), diagonal, body mm, optional dpr and hinge lines. Foldables list states open first;
+  Mate XTs cycles triple -> dual -> single, TriFold draws two hinges
+- Zoom 1 = real size; "Real size" toolbar button; zoom 20-150%. px per mm from GDK on Linux (96 dpi elsewhere)
+- Fold / rotate: page resized once, shell tweens; body height constant across folds (no stretch, no rescale)
+- Macs: lid + base / iMac head + stand, bezel camera, no rotate, no status bar; bridge sees them as tablet + web
+- Not yet run in `pnpm app` (typecheck, lint, vite build, clippy, cargo test pass; UI verified in WebKitGTK 2.54)
+
 ## [v2.4] Open source (2026-10-18)
 - Repo Bor-issov/device-lab public under MIT (LICENSE, license fields in package.json and Cargo.toml)
 - README rewritten for the desktop app (features, install, bridge, development, releases)
@@ -84,7 +97,7 @@
 - src/lib/{devices,store,protocol,frames,capture,fit,native,router}.ts, src/lib/android/types.ts
 - src/lib/external.ts, src/hooks/use-external-frames.ts, src/components/ui/dashboard/external-frame
 - src/demo/{demo-app.tsx,use-demo-bridge.ts}
-- src-tauri/src/{lib,db,capture,probe,state,error,external}.rs, src-tauri/src/android/{sdk,commands}.rs
+- src-tauri/src/{lib,db,capture,probe,state,error,external,screen}.rs, src-tauri/src/android/{sdk,commands}.rs
 - src-tauri/migrations/0001_init.sql, src-tauri/tauri.conf.json, src-tauri/capabilities/{default,external}.json
 
 ## Tech stack

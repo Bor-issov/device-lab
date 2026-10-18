@@ -1,6 +1,25 @@
 import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
-import { DEFAULT_SELECTION, getDevice, getInsets, getViewport, setCustomDevices, type DevicePose, type DeviceSpec } from "@/lib/devices"
+import {
+  canRotate,
+  DEFAULT_POSE,
+  DEFAULT_SELECTION,
+  getDevice,
+  getDpr,
+  getInsets,
+  getViewport,
+  isComputer,
+  isFolded,
+  MM_PER_INCH,
+  nextFold,
+  normalizePose,
+  REPLACED_IDS,
+  setCustomDevices,
+  specFromPreset,
+  type DevicePose,
+  type DeviceSpec,
+  type Preset,
+} from "@/lib/devices"
 import { isNative, native, type StoredLog } from "@/lib/native"
 import type { ColorScheme, LogLevel, PreviewConfig, TextDirection } from "@/lib/protocol"
 import { externalIdFromPath } from "@/lib/router"
@@ -45,6 +64,8 @@ type Runtime = {
   customDevices: DeviceSpec[]
   /** Selected devices currently moved outside into their own window. */
   external: string[]
+  /** CSS px per real millimetre on this screen; zoom 1 draws every device at its real size. */
+  pxPerMm: number
 }
 
 type Actions = {
@@ -63,13 +84,14 @@ type Actions = {
   pushLog: (entry: Omit<LogEntry, "id" | "at">) => void
   clearLogs: () => void
   loadNative: () => Promise<void>
-  savePreset: (spec: DeviceSpec) => Promise<void>
+  savePreset: (preset: Preset) => Promise<void>
   deletePreset: (id: string) => Promise<void>
 }
 
 export type LabState = Settings & Runtime & Actions
 
-const DEFAULT_POSE: DevicePose = { landscape: false, folded: false }
+// The CSS reference pixel is 1/96 inch; used until the monitor reports its physical size.
+export const CSS_PX_PER_MM = 96 / MM_PER_INCH
 const MAX_LOGS = 400
 let logSeq = 0
 
@@ -118,10 +140,6 @@ function queueLog(entry: Omit<StoredLog, "id">) {
   }, 500)
 }
 
-function presetToSpec(p: Awaited<ReturnType<typeof native.presets.list>>[number]): DeviceSpec {
-  return { ...p, group: "Custom" }
-}
-
 export const useLab = create<LabState>()(
   persist(
     (set) => ({
@@ -132,7 +150,7 @@ export const useLab = create<LabState>()(
       fontScale: 1,
       dir: "ltr",
       spoofPlatform: true,
-      zoom: 0.55,
+      zoom: 0.8,
       showChrome: true,
       showHinge: true,
       syncNav: false,
@@ -143,6 +161,7 @@ export const useLab = create<LabState>()(
       logs: [],
       customDevices: [],
       external: [],
+      pxPerMm: CSS_PX_PER_MM,
 
       set: (key, value) => set({ [key]: value } as Pick<Settings, typeof key>),
 
@@ -158,22 +177,30 @@ export const useLab = create<LabState>()(
 
       rotate: (id) =>
         set((s) => {
+          const spec = getDevice(id)
+          if (spec && !canRotate(spec)) return s
           const pose = s.poses[id] ?? DEFAULT_POSE
           return { poses: { ...s.poses, [id]: { ...pose, landscape: !pose.landscape } } }
         }),
 
       rotateAll: () =>
         set((s) => {
-          const anyPortrait = s.selected.some((id) => !(s.poses[id] ?? DEFAULT_POSE).landscape)
+          const rotatable = s.selected.filter((id) => {
+            const spec = getDevice(id)
+            return spec ? canRotate(spec) : false
+          })
+          const anyPortrait = rotatable.some((id) => !(s.poses[id] ?? DEFAULT_POSE).landscape)
           const poses = { ...s.poses }
-          for (const id of s.selected) poses[id] = { ...(poses[id] ?? DEFAULT_POSE), landscape: anyPortrait }
+          for (const id of rotatable) poses[id] = { ...(poses[id] ?? DEFAULT_POSE), landscape: anyPortrait }
           return { poses }
         }),
 
       toggleFold: (id) =>
         set((s) => {
+          const spec = getDevice(id)
+          if (!spec) return s
           const pose = s.poses[id] ?? DEFAULT_POSE
-          return { poses: { ...s.poses, [id]: { ...pose, folded: !pose.folded } } }
+          return { poses: { ...s.poses, [id]: { ...pose, fold: nextFold(spec, pose) } } }
         }),
 
       reload: (id) =>
@@ -218,17 +245,20 @@ export const useLab = create<LabState>()(
 
       loadNative: async () => {
         if (!isNative) return
-        const [presets, history] = await Promise.all([native.presets.list(), native.logs.recent(MAX_LOGS)])
-        const customDevices = presets.map(presetToSpec)
+        const [presets, history, pxPerMm] = await Promise.all([
+          native.presets.list(),
+          native.logs.recent(MAX_LOGS),
+          native.screenPxPerMm().catch(() => null),
+        ])
+        const customDevices = presets.map(specFromPreset)
         setCustomDevices(customDevices)
         logSeq = Math.max(logSeq, ...history.map((l) => l.id))
-        set({ customDevices, logs: history.map((l) => ({ ...l, past: true })) })
+        set({ customDevices, logs: history.map((l) => ({ ...l, past: true })), pxPerMm: pxPerMm ?? CSS_PX_PER_MM })
       },
 
-      savePreset: async (spec) => {
-        const { id, name, os, size, dpr, radius, bezel, cutout, insets } = spec
-        const kind = spec.kind === "tablet" ? "tablet" : "phone"
-        if (isNative) await native.presets.save({ id, name, os, kind, size, dpr, radius, bezel, cutout, insets })
+      savePreset: async (preset) => {
+        if (isNative) await native.presets.save(preset)
+        const spec = specFromPreset(preset)
         set((s) => {
           const customDevices = [...s.customDevices.filter((d) => d.id !== spec.id), spec]
           setCustomDevices(customDevices)
@@ -247,7 +277,8 @@ export const useLab = create<LabState>()(
     }),
     {
       name: "device-lab",
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => (version < 2 ? migrateCatalog(persisted as Partial<Settings>) : persisted) as Settings,
       skipHydration: true,
       storage: createJSONStorage(() => (isNative ? sqliteStorage : localStorage)),
       partialize: (s): Settings => ({
@@ -268,6 +299,18 @@ export const useLab = create<LabState>()(
   )
 )
 
+// v2: retired devices map to their successors, `folded` becomes a fold index, and zoom now means
+// real size (1 = the physical device), so the old point-based zoom is dropped.
+function migrateCatalog(old: Partial<Settings>): Partial<Settings> {
+  const current = (id: string) => REPLACED_IDS[id] ?? id
+  const selected = [...new Set((old.selected ?? DEFAULT_SELECTION).map(current))]
+  const poses: Record<string, DevicePose> = {}
+  for (const [id, pose] of Object.entries(old.poses ?? {})) poses[current(id)] = normalizePose(pose, getDevice(current(id)))
+  const next = { ...old, selected, poses }
+  delete next.zoom
+  return next
+}
+
 export function usePose(id: string) {
   return useLab((s) => s.poses[id] ?? DEFAULT_POSE)
 }
@@ -276,20 +319,23 @@ export function buildConfig(id: string, s: Pick<LabState, "poses" | "scheme" | "
   const spec = getDevice(id)
   if (!spec) return null
   const pose = s.poses[id] ?? DEFAULT_POSE
+  const computer = isComputer(spec)
   return {
     labOrigin: typeof window === "undefined" ? "" : window.location.origin,
     deviceId: spec.id,
     deviceName: spec.name,
-    deviceKind: spec.kind,
-    os: spec.os,
-    spoofPlatform: s.spoofPlatform,
+    // The bridge protocol knows four kinds and two systems: a trifold reports as a fold, and a Mac
+    // reports as a tablet that never spoofs Platform.OS (its browser is the web).
+    deviceKind: spec.kind === "trifold" ? "fold" : spec.kind === "laptop" || spec.kind === "desktop" ? "tablet" : spec.kind,
+    os: spec.os === "macos" ? "ios" : spec.os,
+    spoofPlatform: s.spoofPlatform && !computer,
     scheme: s.scheme,
     fontScale: s.fontScale,
     dir: s.dir,
     insets: getInsets(spec, pose),
     viewport: getViewport(spec, pose),
-    dpr: spec.dpr,
-    folded: pose.folded && Boolean(spec.cover),
+    dpr: getDpr(spec, pose),
+    folded: isFolded(spec, pose),
     landscape: pose.landscape,
   }
 }

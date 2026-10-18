@@ -1,4 +1,4 @@
-import { showsStatusBar, type DevicePose, type DeviceSpec } from "@/lib/devices"
+import { isFolded, showsStatusBar, type DevicePose, type DeviceSpec } from "@/lib/devices"
 import type { ColorScheme } from "@/lib/protocol"
 
 function Signal() {
@@ -79,7 +79,7 @@ export function StatusBar({ spec, pose, scheme, insetTop }: { spec: DeviceSpec; 
     )
   }
 
-  const compact = spec.kind === "flip" && pose.folded
+  const compact = spec.kind === "flip" && isFolded(spec, pose)
   return (
     <div
       aria-hidden

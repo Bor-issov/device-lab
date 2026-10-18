@@ -1,6 +1,8 @@
 # Todo Backlog
 
 ## Next
+- [ ] `pnpm app`: check screen_px_per_mm on both monitors (eDP-1 5.58, 34" 4.32 px/mm from GDK) and hold a phone against a Real size frame
+- [ ] Unconfirmed specs to recheck: Huawei Pura 80 Ultra dpr/body, Xiaomi Pad 8 Pro body, MacBook Neo default resolution, Pixel 11 body
 - [ ] Run "Move outside" in `pnpm app`: right click menu item, transparent window on KDE Wayland, drag, rotate resize, bring back, Alt+F4, Lab close
 - [x] Bridge verified against examples/expo-app (NativeWind 4.2.7 + Reanimated 4 + Expo Router)
 - [ ] Re-test with Gluestack once Gluestack v5 / NativeWind v5 stop crashing on react-native-web 0.21

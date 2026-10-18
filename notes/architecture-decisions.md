@@ -115,3 +115,12 @@ Bridge installed with `install-links=true` (.npmrc) so the file: dependency is c
   token sent by the app. Chosen: make the repo public under MIT. No extra repo, token or workflow step, and the
   shipped v0.2.0 endpoint starts working without a new release.
 - History scanned before the switch: no keys, tokens or env files. The signing key never entered the repo.
+
+## 2026-10-18 - Devices drawn in millimetres, pages in CSS px
+- The shell (body, bezels, keys, laptop base, iMac stand) is laid out in real millimetres from each panel's
+  diagonal and body size; the page keeps its CSS viewport and is scaled into the screen with one transform.
+- Considered: keep drawing in CSS points. Rejected: cover and inner panels have different densities, so a
+  folded phone grew taller than the open one and devices were not comparable in size.
+- Zoom 1 means real size. Linux reads px per mm from GDK; Windows and macOS assume 96 dpi (no monitor mm API
+  in Tauri). A calibration control can come later if EDID values prove wrong.
+- Bridge protocol unchanged: trifold reports as fold, Macs as tablet with Platform spoofing off.

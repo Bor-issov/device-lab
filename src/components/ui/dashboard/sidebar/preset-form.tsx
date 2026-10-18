@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Segmented } from "@/components/ui/dashboard/primitives/controls"
-import { presetFromInput, type DeviceOs } from "@/lib/devices"
+import { presetFromInput, type Preset } from "@/lib/devices"
 import { useLab } from "@/lib/store"
 
 const field = "h-8 w-full min-w-0 rounded-lg bg-input px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus-visible:bg-accent"
@@ -10,7 +10,7 @@ const inRange = (n: number) => Number.isInteger(n) && n >= 200 && n <= 3000
 
 export function PresetForm({ onDone }: { onDone: () => void }) {
   const savePreset = useLab((s) => s.savePreset)
-  const [os, setOs] = useState<DeviceOs>("ios")
+  const [os, setOs] = useState<Preset["os"]>("ios")
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 

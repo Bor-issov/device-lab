@@ -3,7 +3,7 @@ import { emitTo } from "@tauri-apps/api/event"
 import { LogicalSize } from "@tauri-apps/api/dpi"
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow"
 import { FoldHorizontal, RotateCcw, RotateCw, SquareArrowDownLeft, UnfoldHorizontal, X } from "lucide-react"
-import { getDevice, isFoldable, setCustomDevices } from "@/lib/devices"
+import { canRotate, getDevice, isFoldable, isFolded, nextFold, setCustomDevices } from "@/lib/devices"
 import { externalLayout, type ExternalAction, type ExternalPost, type ExternalState } from "@/lib/external"
 import { deviceIdForMessage, postToFrame } from "@/lib/frames"
 import { isBridgeMessage } from "@/lib/protocol"
@@ -30,6 +30,7 @@ function apply(state: ExternalState) {
     nonces: { [id]: state.nonce },
     runtime: state.runtime ? { [id]: state.runtime } : {},
     customDevices: state.customDevices,
+    pxPerMm: state.pxPerMm,
   })
 }
 
@@ -71,7 +72,8 @@ export function ExternalFrame({ id }: { id: string }) {
     }
   }, [id])
 
-  const layout = useMemo(() => (spec && ready ? externalLayout(spec, pose) : null), [spec, pose, ready])
+  const pxPerMm = useLab((s) => s.pxPerMm)
+  const layout = useMemo(() => (spec && ready ? externalLayout(spec, pose, pxPerMm) : null), [spec, pose, pxPerMm, ready])
   const prevLayout = useRef(layout)
 
   // Fit the window to the shell. On rotate / fold grow to cover both sizes while the shell
@@ -101,12 +103,14 @@ export function ExternalFrame({ id }: { id: string }) {
           <Dot on={Boolean(runtime?.connected)} />
           {spec.name}
         </span>
-        <IconButton label="Rotate" onClick={() => act(id, "rotate")}>
-          <RotateCw />
-        </IconButton>
+        {canRotate(spec) && (
+          <IconButton label="Rotate" onClick={() => act(id, "rotate")}>
+            <RotateCw />
+          </IconButton>
+        )}
         {isFoldable(spec) && (
-          <IconButton label={pose.folded ? "Unfold" : "Fold"} onClick={() => act(id, "fold")} pressed={pose.folded}>
-            {pose.folded ? <UnfoldHorizontal /> : <FoldHorizontal />}
+          <IconButton label={nextFold(spec, pose) === 0 ? "Unfold" : "Fold"} onClick={() => act(id, "fold")} pressed={isFolded(spec, pose)}>
+            {nextFold(spec, pose) === 0 ? <UnfoldHorizontal /> : <FoldHorizontal />}
           </IconButton>
         )}
         <IconButton label="Reload" onClick={() => act(id, "reload")}>

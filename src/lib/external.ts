@@ -1,5 +1,5 @@
 import { emitTo } from "@tauri-apps/api/event"
-import { getDevice, getShellSize, type DevicePose, type DeviceSpec } from "@/lib/devices"
+import { DEFAULT_POSE, getDevice, getFootprint, type DevicePose, type DeviceSpec } from "@/lib/devices"
 import { native } from "@/lib/native"
 import type { BridgeMessage, ColorScheme, LabMessage, TextDirection } from "@/lib/protocol"
 import { useLab, type DeviceRuntime } from "@/lib/store"
@@ -25,6 +25,7 @@ export type ExternalState = {
   nonce: number
   runtime: DeviceRuntime | undefined
   customDevices: DeviceSpec[]
+  pxPerMm: number
 }
 
 export type ExternalPost = { id: string; message: LabMessage }
@@ -37,15 +38,19 @@ const GAP = 10
 const PAD = 8
 const MIN_WIDTH = 280
 
-// Real size (zoom 1) unless the device is taller or wider than the screen.
-export function externalLayout(spec: DeviceSpec, pose: DevicePose) {
-  const shell = getShellSize(spec, pose)
-  const fit = Math.min(1, (window.screen.availHeight - 160) / shell.height, (window.screen.availWidth - 120) / shell.width)
+// Real size (zoom 1) unless the device is taller or wider than the screen. The zoom is picked so
+// every fold state fits, so folding never rescales the device.
+export function externalLayout(spec: DeviceSpec, pose: DevicePose, pxPerMm: number) {
+  const states = spec.panels.map((_, fold) => getFootprint(spec, { ...pose, fold }))
+  const maxW = Math.max(...states.map((s) => s.width)) * pxPerMm
+  const maxH = Math.max(...states.map((s) => s.height)) * pxPerMm
+  const fit = Math.min(1, (window.screen.availHeight - 160) / maxH, (window.screen.availWidth - 120) / maxW)
   const zoom = Math.max(0.2, Math.floor(fit * 100) / 100)
+  const shell = getFootprint(spec, pose)
   return {
     zoom,
-    width: Math.ceil(Math.max(shell.width * zoom, MIN_WIDTH) + PAD * 2),
-    height: Math.ceil(shell.height * zoom + BAR + GAP + PAD * 2),
+    width: Math.ceil(Math.max(shell.width * pxPerMm * zoom, MIN_WIDTH) + PAD * 2),
+    height: Math.ceil(shell.height * pxPerMm * zoom + BAR + GAP + PAD * 2),
   }
 }
 
@@ -53,7 +58,7 @@ export async function moveOutside(id: string) {
   const spec = getDevice(id)
   const lab = useLab.getState()
   if (!spec || !lab.selected.includes(id)) return
-  const { width, height } = externalLayout(spec, lab.poses[id] ?? { landscape: false, folded: false })
+  const { width, height } = externalLayout(spec, lab.poses[id] ?? DEFAULT_POSE, lab.pxPerMm)
   lab.setExternal(id, true)
   try {
     await native.external.open(id, spec.name, width, height)

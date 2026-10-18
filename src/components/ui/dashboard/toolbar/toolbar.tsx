@@ -1,11 +1,11 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Camera, Images, Maximize, RefreshCw, RotateCw, ScrollText, Smartphone } from "lucide-react"
+import { Camera, Images, Maximize, RefreshCw, RotateCw, Ruler, ScrollText, Smartphone } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { IconButton, Segmented, Toggle } from "@/components/ui/dashboard/primitives/controls"
 import { useHasAndroidSdk } from "@/hooks/use-android"
 import { canCaptureNatively, captureDevices, captureNative } from "@/lib/capture"
-import { fitZoom } from "@/lib/fit"
+import { fitZoom, MAX_ZOOM, MIN_ZOOM } from "@/lib/fit"
 import { useLab, type PanelId } from "@/lib/store"
 
 const FONT_SCALES = [
@@ -25,7 +25,7 @@ export function Toolbar() {
   function fit() {
     const canvas = document.getElementById("lab-canvas")
     if (!canvas) return
-    s.set("zoom", fitZoom(s.selected.filter((id) => !s.external.includes(id)), s.poses, { width: canvas.clientWidth, height: canvas.clientHeight }))
+    s.set("zoom", fitZoom(s.selected.filter((id) => !s.external.includes(id)), s.poses, { width: canvas.clientWidth, height: canvas.clientHeight }, s.pxPerMm))
   }
 
   async function capture() {
@@ -96,14 +96,17 @@ export function Toolbar() {
         <div className="mr-1 flex w-36 items-center gap-2.5">
           <Slider
             aria-label="Zoom"
-            min={20}
-            max={100}
+            min={MIN_ZOOM * 100}
+            max={MAX_ZOOM * 100}
             step={1}
             value={[Math.round(s.zoom * 100)]}
             onValueChange={(v) => s.set("zoom", (Array.isArray(v) ? v[0] : v) / 100)}
           />
           <span className="w-9 text-right font-mono text-xs text-muted-foreground tabular-nums">{Math.round(s.zoom * 100)}%</span>
         </div>
+        <IconButton label="Real size" onClick={() => s.set("zoom", 1)} pressed={s.zoom === 1}>
+          <Ruler />
+        </IconButton>
         <IconButton label="Fit to canvas" onClick={fit}>
           <Maximize />
         </IconButton>

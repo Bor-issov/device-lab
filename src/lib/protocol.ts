@@ -1,7 +1,7 @@
 // Wire format between the Lab (parent window) and the preview bridge running inside each frame.
 // Keep in sync with packages/preview-bridge/src/protocol.ts.
 
-import type { DeviceKind, DeviceOs, Insets } from "@/lib/devices"
+import type { Insets } from "@/lib/devices"
 
 export const LAB_SOURCE = "devicelab"
 export const BRIDGE_SOURCE = "devicelab-bridge"
@@ -15,8 +15,8 @@ export type PreviewConfig = {
   labOrigin: string
   deviceId: string
   deviceName: string
-  deviceKind: DeviceKind
-  os: DeviceOs
+  deviceKind: "phone" | "tablet" | "fold" | "flip"
+  os: "ios" | "android"
   spoofPlatform: boolean
   scheme: ColorScheme
   fontScale: number
