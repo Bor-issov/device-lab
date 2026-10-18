@@ -42,7 +42,7 @@ export function UpdateCheck() {
     setState({ step: "checking" })
     setOpen(true)
     try {
-      const update = await check()
+      const update = await check({ timeout: 20_000 })
       setState(update ? { step: "available", update } : { step: "latest" })
     } catch (err) {
       setState({ step: "error", message: String(err) })

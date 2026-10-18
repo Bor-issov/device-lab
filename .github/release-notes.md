@@ -1,5 +1,5 @@
-- Move outside: right click a frame (or use its caption button) to put it in its own window on the desktop, with rotate, fold, reload, bring back and close above it
-- Check for updates: a button in the sidebar shows what is new and installs the update in place
-- Screenshots panel shows each shot at its own shape instead of squeezed boxes
-- Bridge setup guide opens from a frame's "no bridge" label instead of its own tab
-- Android tab only shows when an Android SDK is installed
+- Real-world sizes: every device is drawn at its physical size, 100% zoom matches the real thing, new Real size button
+- Foldables keep their height when folding and no longer zoom in or out; the page inside resizes once instead of flickering through every size
+- New devices from the last two years: iPhone 18 Pro / Pro Max, iPhone Duo, iPhone 17e, iPad Pro M5, iPad Air M4, Macs (MacBook Pro, Air, Neo, iMac), Galaxy Z TriFold, Fold 8 / Fold 8 Ultra, Flip 8, Pixel 11 series, Galaxy S26, Huawei Mate XTs (triple, dual, single), Mate X7, Pura 80 Ultra, Xiaomi 17, Mix Flip 2, Pad 8 Pro, Galaxy Tab S11
+- Devices older than two years removed; saved selections move to their successors
+- Check for updates gives up after 20 seconds instead of waiting forever

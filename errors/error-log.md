@@ -83,3 +83,9 @@
   own. Cause is Next dev compiling/hydrating for several frames at once, not the Lab: iframe rAF measured at a
   steady 30 fps in WebKitGTK 2.54 (also under visibility:hidden / opacity:0 parents and during fold).
 - Status: not a Lab bug (verified in WebKitGTK with snapshots at 5 s and 12 s, no interaction)
+
+## 2026-10-18 - "Check for updates" shows nothing new
+- Installed AppImage is v0.2.0 and latest.json also says 0.2.0, so check() returns null ("up to date").
+  Dialog verified rendering in WebKitGTK with stubbed IPC. No timeout on check(): a stalled request would
+  leave "Checking for updates" up forever.
+- Status: fixed (check timeout 20 s, v0.3.0 release prepared with the real-size / catalog changes)
